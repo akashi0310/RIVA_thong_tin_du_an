@@ -59,22 +59,12 @@ export default function IncidentList() {
     })), `incidents-${format(new Date(), 'yyyy-MM-dd')}.csv`)
   }
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-
   if (loading) return <div className="text-center py-16 text-gray-400">Đang tải dữ liệu...</div>
 
   if (fetchError) return (
-    <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center space-y-2">
-      <p className="text-red-700 font-semibold">Không thể tải dữ liệu</p>
+    <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+      <p className="text-red-700 font-semibold mb-1">Không thể tải dữ liệu</p>
       <p className="text-red-500 text-sm">{fetchError}</p>
-      <p className="text-gray-400 text-xs">URL: {supabaseUrl ? supabaseUrl.slice(0, 40) + '...' : '❌ VITE_SUPABASE_URL chưa được cấu hình'}</p>
-    </div>
-  )
-
-  if (!supabaseUrl) return (
-    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-      <p className="text-yellow-700 font-semibold">Thiếu cấu hình Supabase</p>
-      <p className="text-yellow-600 text-sm mt-1">VITE_SUPABASE_URL chưa được set trong môi trường Vercel</p>
     </div>
   )
 
