@@ -10,6 +10,16 @@ import toast from 'react-hot-toast'
 
 const inputCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
+// Convert UTC ISO string to datetime-local input value (local time)
+function toDatetimeLocal(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d)) return ''
+  const offset = d.getTimezoneOffset()
+  const local = new Date(d.getTime() - offset * 60000)
+  return local.toISOString().slice(0, 16)
+}
+
 function Field({ label, required, children }) {
   return (
     <div>
@@ -163,7 +173,7 @@ export default function IncidentForm() {
           </select>
         </Field>
         <Field label="Thời điểm tiếp nhận">
-          <input type="datetime-local" className={inputCls} value={form.thoi_diem_tiep_nhan?.slice(0, 16)} onChange={e => updateField('thoi_diem_tiep_nhan', new Date(e.target.value).toISOString())} />
+          <input type="datetime-local" className={inputCls} value={toDatetimeLocal(form.thoi_diem_tiep_nhan)} onChange={e => updateField('thoi_diem_tiep_nhan', new Date(e.target.value).toISOString())} />
         </Field>
         <Field label="Người tiếp nhận">
           <select className={inputCls} value={form.nguoi_tiep_nhan} onChange={e => updateField('nguoi_tiep_nhan', e.target.value)}>
@@ -200,7 +210,7 @@ export default function IncidentForm() {
           </select>
         </Field>
         <Field label="Thời điểm hoàn thành">
-          <input type="datetime-local" className={inputCls} value={form.thoi_diem_hoan_thanh?.slice(0, 16) || ''} onChange={e => updateField('thoi_diem_hoan_thanh', e.target.value ? new Date(e.target.value).toISOString() : '')} />
+          <input type="datetime-local" className={inputCls} value={toDatetimeLocal(form.thoi_diem_hoan_thanh)} onChange={e => updateField('thoi_diem_hoan_thanh', e.target.value ? new Date(e.target.value).toISOString() : '')} />
         </Field>
         <div className="col-span-2">
           <Field label="Phương án xử lý">
