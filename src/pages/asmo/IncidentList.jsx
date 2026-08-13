@@ -11,7 +11,7 @@ import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
 export default function IncidentList() {
-  const { incidents, fetchIncidents, deleteIncident, subscribeRealtime } = useAsmoStore()
+  const { incidents, fetchIncidents, deleteIncident, subscribeRealtime, loading, fetchError } = useAsmoStore()
   const { isManager } = useAuth()
   const navigate = useNavigate()
 
@@ -58,6 +58,15 @@ export default function IncidentList() {
       'Trạng thái': i.trang_thai, 'Người xử lý': i.nguoi_phu_trach_xu_ly,
     })), `incidents-${format(new Date(), 'yyyy-MM-dd')}.csv`)
   }
+
+  if (loading) return <div className="text-center py-16 text-gray-400">Đang tải dữ liệu...</div>
+
+  if (fetchError) return (
+    <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+      <p className="text-red-700 font-semibold mb-1">Không thể tải dữ liệu</p>
+      <p className="text-red-500 text-sm">{fetchError}</p>
+    </div>
+  )
 
   return (
     <div className="space-y-4">

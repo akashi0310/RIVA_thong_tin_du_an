@@ -5,13 +5,14 @@ export const useAsmoStore = create((set, get) => ({
   incidents: [],
   tasks: [],
   loading: false,
-  error: null,
+  fetchError: null,
 
   // --- Incidents ---
   fetchIncidents: async () => {
-    set({ loading: true })
+    set({ loading: true, fetchError: null })
     const { data, error } = await supabase.from('incidents').select('*').order('created_at', { ascending: false })
-    set({ incidents: data || [], loading: false, error })
+    if (error) console.error('fetchIncidents error:', error.message)
+    set({ incidents: data || [], loading: false, fetchError: error?.message || null })
   },
 
   addIncident: async (incident) => {
@@ -35,7 +36,8 @@ export const useAsmoStore = create((set, get) => ({
   // --- Tasks ---
   fetchTasks: async () => {
     const { data, error } = await supabase.from('tasks').select('*').order('stt', { ascending: true })
-    set({ tasks: data || [], error })
+    if (error) console.error('fetchTasks error:', error.message)
+    set({ tasks: data || [] })
   },
 
   addTask: async (task) => {
@@ -56,12 +58,17 @@ export const useAsmoStore = create((set, get) => ({
     return { error }
   },
 
-  // Realtime subscription
+  // Realtime subscription — wrapped in try/catch
   subscribeRealtime: () => {
-    const channel = supabase.channel('asmo-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, () => get().fetchIncidents())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => get().fetchTasks())
-      .subscribe()
-    return () => supabase.removeChannel(channel)
+    try {
+      const channel = supabase.channel('asmo-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, () => get().fetchIncidents())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => get().fetchTasks())
+        .subscribe()
+      return () => supabase.removeChannel(channel)
+    } catch (e) {
+      console.error('Realtime subscription failed:', e)
+      return () => {}
+    }
   },
 }))
