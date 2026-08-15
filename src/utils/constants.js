@@ -34,9 +34,10 @@ export const TEAM_MEMBERS = [
   { id: '4', ten: 'NGÂN', vaiTro: 'Finance & Support' },
   { id: '5', ten: 'NAM', vaiTro: 'Marketing Head' },
   { id: '6', ten: 'VÂN ANH', vaiTro: 'Operations Manager' },
-  { id: '7', ten: 'DŨNG', vaiTro: 'Training & Content' },
+  { id: '7', ten: 'DŨNG', vaiTro: 'Data Science' },
   { id: '8', ten: 'SƠN', vaiTro: 'Data & Ops Support' },
-  { id: '9', ten: 'ÁNH-NHI-PHƯƠNG', vaiTro: 'Marketing Team' },
+  { id: '9', ten: 'ÁNH', vaiTro: 'Marketing Team' },
+  { id: '10', ten: 'PHƯƠNG', vaiTro: 'Marketing Team' },
 ]
 
 export const NCKH_TYPES = ['IENA', 'IPITEX', 'SVIFF']
@@ -44,3 +45,17 @@ export const NCKH_TYPES = ['IENA', 'IPITEX', 'SVIFF']
 export const DUHOC_STATUSES = ['Tư vấn', 'Nộp hồ sơ', 'Chờ kết quả', 'Đậu', 'Không đậu']
 
 export const ONLUYEN_STATUSES = ['Đăng ký', 'Đang học', 'Kết thúc']
+
+export const CSKH_CHANNELS = ['web_form', 'messenger', 'fb_comment', 'tiktok', 'email']
+
+export const CSKH_CHANNEL_LABELS = {
+  web_form: 'Web Form',
+  messenger: 'Messenger',
+  fb_comment: 'FB Comment',
+  tiktok: 'TikTok',
+  email: 'Email',
+}
+
+export const CSKH_STATUSES = ['Mới', 'Đang xử lý', 'Đã trả lời', 'Đóng']
+
+export const CSKH_FAQ_CATEGORIES = ['Học phí', 'Lịch học', 'Du học', 'Ôn luyện', 'NCKH', 'Tuyển sinh', 'Khác']
