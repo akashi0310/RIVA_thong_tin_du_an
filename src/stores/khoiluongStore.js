@@ -63,20 +63,14 @@ export const useKhoiLuongStore = create((set, get) => ({
     return { data, error }
   },
 
-  // Tính thống kê nhân viên từ danh sách công việc
+  // Thống kê theo người thực hiện (col H)
   getPeopleStats: () => {
     const { congViec } = get()
     const people = {}
     for (const t of congViec) {
-      const dirs = (t.dieu_hanh || '').split(',').map(s => s.trim()).filter(Boolean)
-      const coords = (t.dieu_phoi || '').split(',').map(s => s.trim()).filter(Boolean)
-      const execs = (t.thuc_hien || '').split(',').map(s => s.trim()).filter(Boolean)
-      const all = new Set([...dirs, ...coords, ...execs])
-      for (const name of all) {
-        if (!people[name]) people[name] = { name, directorCount: 0, coordinatorCount: 0, executorCount: 0, total: 0, done: 0 }
-        if (dirs.includes(name)) people[name].directorCount++
-        if (coords.includes(name)) people[name].coordinatorCount++
-        if (execs.includes(name)) people[name].executorCount++
+      const names = (t.thuc_hien || '').split(/[,/]/).map(s => s.trim()).filter(Boolean)
+      for (const name of names) {
+        if (!people[name]) people[name] = { name, total: 0, done: 0 }
         people[name].total++
         if (t.trang_thai === '✓') people[name].done++
       }

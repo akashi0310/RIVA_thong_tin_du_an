@@ -3,17 +3,6 @@ import { Link } from 'react-router-dom'
 import { useKhoiLuongStore } from '../../stores/khoiluongStore'
 import KPICard from '../../components/common/KPICard'
 
-function isOverdueDate(deadlineStr) {
-  if (!deadlineStr) return false
-  return new Date(deadlineStr) < new Date(new Date().toDateString())
-}
-
-function isDueSoon(deadlineStr) {
-  if (!deadlineStr) return false
-  const diff = (new Date(deadlineStr) - new Date(new Date().toDateString())) / 86400000
-  return diff >= 0 && diff <= 3
-}
-
 export default function KhoiLuongDashboard() {
   const { congViec, loading, fetchAll, getPeopleStats } = useKhoiLuongStore()
 
@@ -22,10 +11,7 @@ export default function KhoiLuongDashboard() {
   const total = congViec.length
   const done = congViec.filter(t => t.trang_thai === '✓').length
   const inProgress = congViec.filter(t => t.trang_thai === '□').length
-  const overdue = congViec.filter(t => isOverdueDate(t.deadline) && t.trang_thai !== '✓').length
-
-  const warningSoon = congViec.filter(t => isDueSoon(t.deadline) && t.trang_thai !== '✓')
-  const warningOverdue = congViec.filter(t => isOverdueDate(t.deadline) && t.trang_thai !== '✓')
+  const notDone = congViec.filter(t => t.trang_thai === '✗').length
 
   const people = getPeopleStats()
 
@@ -38,45 +24,8 @@ export default function KhoiLuongDashboard() {
         <KPICard label="Tổng công việc" value={total} icon="📋" color="blue" />
         <KPICard label="Hoàn thành" value={done} icon="✅" color="green" sub={total ? `${Math.round(done / total * 100)}%` : '0%'} />
         <KPICard label="Đang thực hiện" value={inProgress} icon="⏳" color="yellow" />
-        <KPICard label="Trễ hạn" value={overdue} icon="🚨" color="red" />
+        <KPICard label="Không thực hiện" value={notDone} icon="✗" color="red" />
       </div>
-
-      {/* Cảnh báo */}
-      {(warningOverdue.length > 0 || warningSoon.length > 0) && (
-        <div className="space-y-2">
-          {warningOverdue.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <p className="text-red-700 font-semibold text-sm mb-2">🚨 {warningOverdue.length} công việc đã quá hạn</p>
-              <ul className="space-y-1">
-                {warningOverdue.slice(0, 5).map(t => (
-                  <li key={t.id} className="text-xs text-red-600 flex justify-between">
-                    <span>{t.ten_cong_viec}</span>
-                    <span className="font-medium">{t.deadline} · {t.thuc_hien}</span>
-                  </li>
-                ))}
-                {warningOverdue.length > 5 && (
-                  <li className="text-xs text-red-400">
-                    <Link to="/khoi-luong/cong-viec" className="underline">Xem thêm {warningOverdue.length - 5} công việc...</Link>
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
-          {warningSoon.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-              <p className="text-yellow-700 font-semibold text-sm mb-2">⚠️ {warningSoon.length} công việc sắp đến hạn (≤ 3 ngày)</p>
-              <ul className="space-y-1">
-                {warningSoon.slice(0, 3).map(t => (
-                  <li key={t.id} className="text-xs text-yellow-700 flex justify-between">
-                    <span>{t.ten_cong_viec}</span>
-                    <span className="font-medium">{t.deadline} · {t.thuc_hien}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Bảng phân phối khối lượng theo nhân viên */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -89,9 +38,6 @@ export default function KhoiLuongDashboard() {
             <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
               <tr>
                 <th className="px-4 py-3 text-left">Nhân viên</th>
-                <th className="px-4 py-3 text-center">Điều hành</th>
-                <th className="px-4 py-3 text-center">Điều phối</th>
-                <th className="px-4 py-3 text-center">Thực hiện</th>
                 <th className="px-4 py-3 text-center">Tổng</th>
                 <th className="px-4 py-3 text-center">Hoàn thành</th>
                 <th className="px-4 py-3 text-left w-40">Tiến độ</th>
@@ -103,9 +49,6 @@ export default function KhoiLuongDashboard() {
                 return (
                   <tr key={p.name} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-800">{p.name}</td>
-                    <td className="px-4 py-3 text-center text-gray-500">{p.directorCount}</td>
-                    <td className="px-4 py-3 text-center text-gray-500">{p.coordinatorCount}</td>
-                    <td className="px-4 py-3 text-center text-gray-500">{p.executorCount}</td>
                     <td className="px-4 py-3 text-center font-semibold text-gray-800">{p.total}</td>
                     <td className="px-4 py-3 text-center text-green-600 font-medium">{p.done}</td>
                     <td className="px-4 py-3">
@@ -124,7 +67,7 @@ export default function KhoiLuongDashboard() {
               })}
               {people.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">Chưa có dữ liệu</td>
+                  <td colSpan={4} className="px-4 py-8 text-center text-gray-400">Chưa có dữ liệu</td>
                 </tr>
               )}
             </tbody>
