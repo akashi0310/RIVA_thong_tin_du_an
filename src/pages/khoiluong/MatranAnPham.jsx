@@ -12,6 +12,7 @@ const STATUS_STYLE = {
 export default function MatranAnPham() {
   const { marketing, loading, fetchAll, updateMarketing } = useKhoiLuongStore()
   const [activeTab, setActiveTab] = useState(null)
+  const [filterNhom, setFilterNhom] = useState('')
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
 
@@ -24,8 +25,14 @@ export default function MatranAnPham() {
     if (allDauRa.length && activeTab === null) setActiveTab(allDauRa[0])
   }, [marketing])
 
+  const allNhom = [...new Set(marketing.map(m => m.nhom_san_pham).filter(Boolean))]
+
   // Các row trong tab hiện tại
-  const tabItems = marketing.filter(m => m.dau_ra === activeTab)
+  const tabItems = marketing.filter(m => {
+    if (m.dau_ra !== activeTab) return false
+    if (filterNhom && m.nhom_san_pham !== filterNhom) return false
+    return true
+  })
 
   const toggleStatus = async (item) => {
     const cur = STATUS_CYCLE.indexOf(item.trang_thai)
@@ -83,6 +90,19 @@ export default function MatranAnPham() {
 
       {/* Panel nội dung */}
       <div className="bg-white rounded-b-xl rounded-tr-xl border border-gray-200 shadow-sm overflow-hidden">
+        {/* Filter nhóm sản phẩm */}
+        <div className="flex gap-2 px-4 py-2.5 border-b border-gray-100 bg-gray-50/50">
+          <select
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            value={filterNhom}
+            onChange={e => setFilterNhom(e.target.value)}
+          >
+            <option value="">Tất cả nhóm sản phẩm</option>
+            {allNhom.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <span className="text-sm text-gray-400 self-center">{tabItems.length} mục</span>
+        </div>
+
         {tabItems.length === 0 ? (
           <div className="py-12 text-center text-gray-400 text-sm">Không có dữ liệu</div>
         ) : (
