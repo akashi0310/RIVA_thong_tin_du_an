@@ -91,19 +91,29 @@ export default function Home() {
   ]
 
   const colorMap = {
-    blue: { border: 'border-blue-200', icon: 'bg-blue-100', title: 'text-blue-700', btn: 'bg-blue-600 hover:bg-blue-700' },
-    purple: { border: 'border-purple-200', icon: 'bg-purple-100', title: 'text-purple-700', btn: 'bg-purple-600 hover:bg-purple-700' },
-    green: { border: 'border-green-200', icon: 'bg-green-100', title: 'text-green-700', btn: 'bg-green-600 hover:bg-green-700' },
-    amber: { border: 'border-amber-200', icon: 'bg-amber-100', title: 'text-amber-700', btn: 'bg-amber-600 hover:bg-amber-700' },
-    teal: { border: 'border-teal-200', icon: 'bg-teal-100', title: 'text-teal-700', btn: 'bg-teal-600 hover:bg-teal-700' },
-    indigo: { border: 'border-indigo-200', icon: 'bg-indigo-100', title: 'text-indigo-700', btn: 'bg-indigo-600 hover:bg-indigo-700' },
+    blue:   { border: 'border-blue-200',   icon: 'bg-blue-100 text-blue-600',   title: 'text-blue-700',   btn: 'bg-blue-600 hover:bg-blue-700',     bar: 'from-blue-400 to-blue-600' },
+    purple: { border: 'border-purple-200', icon: 'bg-purple-100 text-purple-600', title: 'text-purple-700', btn: 'bg-purple-600 hover:bg-purple-700', bar: 'from-purple-400 to-purple-600' },
+    green:  { border: 'border-green-200',  icon: 'bg-green-100 text-green-600',  title: 'text-green-700',  btn: 'bg-green-600 hover:bg-green-700',   bar: 'from-green-400 to-green-600' },
+    amber:  { border: 'border-amber-200',  icon: 'bg-amber-100 text-amber-600',  title: 'text-amber-700',  btn: 'bg-amber-500 hover:bg-amber-600',   bar: 'from-amber-400 to-amber-500' },
+    teal:   { border: 'border-teal-200',   icon: 'bg-teal-100 text-teal-600',   title: 'text-teal-700',   btn: 'bg-teal-600 hover:bg-teal-700',     bar: 'from-teal-400 to-teal-600' },
+    indigo: { border: 'border-indigo-200', icon: 'bg-indigo-100 text-indigo-600', title: 'text-indigo-700', btn: 'bg-indigo-600 hover:bg-indigo-700', bar: 'from-indigo-400 to-indigo-600' },
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">Tổng quan dự án RIVA</h1>
-        <p className="text-gray-500 text-sm mt-1">Theo dõi tất cả các dự án đang triển khai</p>
+      {/* Hero banner */}
+      <div className="rounded-2xl p-6 text-white relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #2563eb 60%, #7c3aed 100%)' }}
+      >
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+        <div className="relative">
+          <h1 className="text-2xl font-extrabold tracking-tight">Tổng quan dự án RIVA</h1>
+          <p className="text-indigo-200 text-sm mt-1">Theo dõi tất cả các dự án đang triển khai</p>
+          <div className="flex gap-4 mt-4 text-sm">
+            <span className="bg-white/15 px-3 py-1 rounded-full">{cards.reduce((s, c) => s + c.stats.reduce((ss, st) => ss + (typeof st.value === 'number' ? 0 : 0), 0), 0) || activeIncidents + activeTasks} hoạt động</span>
+            {overdueCount > 0 && <span className="bg-red-500/80 px-3 py-1 rounded-full animate-pulse">{overdueCount} quá hạn</span>}
+          </div>
+        </div>
       </div>
 
       {/* ASMO featured card */}
@@ -144,18 +154,20 @@ export default function Home() {
         {cards.filter(c => !c.featured).map(card => {
           const c = colorMap[card.color]
           return (
-            <div key={card.to} className={`bg-white rounded-xl border ${c.border} shadow-sm p-5`}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`text-xl p-2 rounded-lg ${c.icon}`}>{card.icon}</span>
+            <div key={card.to} className={`bg-white rounded-2xl border ${c.border} shadow-sm p-5 hover:shadow-md transition-shadow overflow-hidden relative`}>
+              {/* Gradient bar top */}
+              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${c.bar}`} />
+              <div className="flex items-center gap-2 mb-3 mt-1">
+                <span className={`text-xl p-2 rounded-xl ${c.icon}`}>{card.icon}</span>
                 <h3 className={`font-bold ${c.title}`}>{card.label}</h3>
-                <Link to={card.to} className="ml-auto text-xs text-gray-400 hover:text-gray-600">→</Link>
+                <Link to={card.to} className={`ml-auto text-xs font-medium px-2.5 py-1 rounded-lg text-white transition ${c.btn}`}>Xem →</Link>
               </div>
-              <p className="text-xs text-gray-500 mb-3">{card.desc}</p>
+              <p className="text-xs text-gray-400 mb-3">{card.desc}</p>
               <div className="grid grid-cols-2 gap-2">
                 {card.stats.map(s => (
-                  <div key={s.label} className="bg-gray-50 rounded-lg p-2">
-                    <p className="text-lg font-bold text-gray-800">{s.value}</p>
-                    <p className="text-xs text-gray-500">{s.label}</p>
+                  <div key={s.label} className={`rounded-xl p-2.5 ${s.urgent ? 'bg-red-50 border border-red-100' : 'bg-gray-50'}`}>
+                    <p className={`text-lg font-bold ${s.urgent ? 'text-red-600' : 'text-gray-800'}`}>{s.value}</p>
+                    <p className="text-xs text-gray-400">{s.label}</p>
                   </div>
                 ))}
               </div>

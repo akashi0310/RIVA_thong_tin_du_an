@@ -38,15 +38,20 @@ export default function Sidebar({ open, onClose }) {
 
   return (
     <>
-      {/* Overlay mobile */}
-      {open && <div className="fixed inset-0 bg-black/30 z-20 lg:hidden" onClick={onClose} />}
+      {open && <div className="fixed inset-0 bg-black/40 z-20 lg:hidden" onClick={onClose} />}
 
-      <aside className={`fixed top-0 left-0 h-full w-56 bg-white border-r border-gray-200 z-30 flex flex-col transform transition-transform lg:translate-x-0 lg:static lg:z-auto ${open ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-4 border-b border-gray-100">
-          <div className="font-bold text-blue-600 text-lg">RIVA</div>
-          <div className="text-xs text-gray-400">Quản lý dự án</div>
+      <aside
+        className={`fixed top-0 left-0 h-full w-56 z-30 flex flex-col transform transition-transform lg:translate-x-0 lg:static lg:z-auto ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{ background: 'linear-gradient(175deg, #1e1b4b 0%, #1e3a5f 55%, #0f172a 100%)' }}
+      >
+        {/* Logo */}
+        <div className="px-5 py-5 border-b border-white/10">
+          <div className="font-extrabold text-white text-xl tracking-widest">RIVA</div>
+          <div className="text-xs text-indigo-300 mt-0.5">Quản lý dự án</div>
         </div>
-        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
           {navItems.map(item => {
             const isParentActive = item.children && location.pathname.startsWith(item.to)
             return (
@@ -55,18 +60,25 @@ export default function Sidebar({ open, onClose }) {
                   to={item.children ? item.children[0].to : item.to}
                   end={item.exact}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${(isActive || isParentActive) ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`
+                    `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      (isActive || isParentActive)
+                        ? 'bg-white/15 text-white'
+                        : 'text-indigo-200 hover:bg-white/10 hover:text-white'
+                    }`
                   }
                   onClick={onClose}
                 >
-                  <span>{item.icon}</span> {item.label}
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
                 </NavLink>
                 {item.children && isParentActive && (
-                  <div className="ml-6 mt-1 space-y-1">
+                  <div className="ml-5 mt-0.5 mb-1 pl-3 border-l border-white/10 space-y-0.5">
                     {item.children.map(child => (
                       <NavLink key={child.to} to={child.to}
                         className={({ isActive }) =>
-                          `block px-3 py-1.5 rounded-lg text-xs transition-colors ${isActive ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`
+                          `block px-2 py-1.5 rounded-md text-xs transition-all ${
+                            isActive ? 'text-white font-semibold bg-white/10' : 'text-indigo-300 hover:text-white hover:bg-white/5'
+                          }`
                         }
                         onClick={onClose}
                       >
@@ -79,6 +91,10 @@ export default function Sidebar({ open, onClose }) {
             )
           })}
         </nav>
+
+        <div className="px-4 py-3 border-t border-white/10">
+          <p className="text-xs text-indigo-400 text-center">© 2026 RIVA</p>
+        </div>
       </aside>
     </>
   )
