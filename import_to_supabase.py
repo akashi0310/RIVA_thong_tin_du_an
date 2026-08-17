@@ -113,42 +113,34 @@ def parse_kpi(excel_path):
     return kpi_list
 
 # ─── 3. MARKETING OUTPUT MATRIX ──────────────────────────────────────────────
+# Cột Excel: Nhóm sản phẩm | Đối tượng | Đầu ra bắt buộc | Đơn vị KPI |
+#            KPI sản lượng tháng | KPI chất lượng/chuyển đổi | Người phụ trách chính | Người phối hợp
 
 def parse_marketing(excel_path):
-    df = pd.read_excel(excel_path, sheet_name='Marketing Output Matrix', header=None)
+    df = pd.read_excel(excel_path, sheet_name='Marketing Output Matrix', header=0)
     items = []
-    stt = 0
 
-    for _, row in df.iterrows():
-        v = [str(c).strip() if pd.notna(c) else '' for c in row]
-        if v[0] in ('STT', '') and not v[1]:
+    for i, (_, row) in enumerate(df.iterrows()):
+        v = [str(c).strip() if pd.notna(c) and str(c).strip() != 'nan' else '' for c in row]
+
+        # Bỏ qua hàng trống (không có nhóm sản phẩm lẫn đầu ra)
+        nhom = v[0] if len(v) > 0 else ''
+        dau_ra = v[2] if len(v) > 2 else ''
+        if not nhom and not dau_ra:
             continue
-        if not v[1]:
-            continue
-
-        try:
-            stt_val = int(float(v[0])) if v[0] and v[0].replace('.', '').isdigit() else (stt + 1)
-        except ValueError:
-            stt_val = stt + 1
-        stt = stt_val
-
-        deadline = None
-        if len(v) > 4 and v[4]:
-            try:
-                dl = pd.to_datetime(v[4], dayfirst=True, errors='coerce')
-                if pd.notna(dl):
-                    deadline = dl.strftime('%Y-%m-%d')
-            except Exception:
-                pass
 
         items.append({
-            'stt': stt_val,
-            'hang_muc': v[1],
-            'san_pham': v[2] if len(v) > 2 else '',
-            'nguoi_phu_trach': v[3] if len(v) > 3 else '',
-            'deadline': deadline,
-            'trang_thai': v[5] if len(v) > 5 and v[5] in ('□', '✓', '✗') else '□',
-            'ghi_chu': v[6] if len(v) > 6 else '',
+            'stt': i + 1,
+            'nhom_san_pham': nhom,
+            'doi_tuong': v[1] if len(v) > 1 else '',
+            'dau_ra': dau_ra,
+            'don_vi_kpi': v[3] if len(v) > 3 else '',
+            'kpi_san_luong': v[4] if len(v) > 4 else '',
+            'kpi_chat_luong': v[5] if len(v) > 5 else '',
+            'nguoi_phu_trach': v[6] if len(v) > 6 else '',
+            'nguoi_phoi_hop': v[7] if len(v) > 7 else '',
+            'trang_thai': '□',
+            'ghi_chu': '',
         })
 
     return items

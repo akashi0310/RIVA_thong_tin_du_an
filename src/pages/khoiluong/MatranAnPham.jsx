@@ -2,28 +2,41 @@ import { useEffect, useState } from 'react'
 import { useKhoiLuongStore } from '../../stores/khoiluongStore'
 import toast from 'react-hot-toast'
 
+const STATUS_CYCLE = ['□', '✓', '✗']
 const STATUS_STYLE = {
   '✓': 'bg-green-100 text-green-700 border-green-300',
   '✗': 'bg-red-100 text-red-600 border-red-300',
   '□': 'bg-gray-100 text-gray-500 border-gray-300',
 }
-const STATUS_CYCLE = ['□', '✓', '✗']
-
-function isOverdueDate(d) {
-  if (!d) return false
-  return new Date(d) < new Date(new Date().toDateString())
-}
 
 export default function MatranAnPham() {
   const { marketing, loading, fetchAll, updateMarketing } = useKhoiLuongStore()
-  const [filterPerson, setFilterPerson] = useState('')
+  const [activeTab, setActiveTab] = useState(null)
+  const [filterNguoi, setFilterNguoi] = useState('')
+  const [filterDauRa, setFilterDauRa] = useState('')
+  const [editingNote, setEditingNote] = useState(null)
+  const [noteValue, setNoteValue] = useState('')
 
   useEffect(() => { fetchAll() }, [])
 
-  const allPersons = [...new Set(marketing.map(m => m.nguoi_phu_trach).filter(Boolean))].sort()
+  const allNhom = [...new Set(marketing.map(m => m.nhom_san_pham).filter(Boolean))]
 
-  const filtered = marketing.filter(m => {
-    if (filterPerson && m.nguoi_phu_trach !== filterPerson) return false
+  useEffect(() => {
+    if (allNhom.length && activeTab === null) setActiveTab(allNhom[0])
+  }, [marketing])
+
+  const allNguoi = [...new Set(
+    marketing.filter(m => m.nhom_san_pham === activeTab).map(m => m.nguoi_phu_trach).filter(Boolean)
+  )].sort()
+
+  const allDauRa = [...new Set(
+    marketing.filter(m => m.nhom_san_pham === activeTab).map(m => m.dau_ra).filter(Boolean)
+  )].sort()
+
+  const tabItems = marketing.filter(m => {
+    if (m.nhom_san_pham !== activeTab) return false
+    if (filterNguoi && m.nguoi_phu_trach !== filterNguoi) return false
+    if (filterDauRa && m.dau_ra !== filterDauRa) return false
     return true
   })
 
@@ -34,8 +47,17 @@ export default function MatranAnPham() {
     if (error) toast.error('Không thể cập nhật trạng thái')
   }
 
-  const done = marketing.filter(m => m.trang_thai === '✓').length
-  const total = marketing.length
+  const saveNote = async (item) => {
+    const { error } = await updateMarketing(item.id, { ghi_chu: noteValue })
+    if (error) toast.error('Không thể lưu ghi chú')
+    else { toast.success('Đã lưu ghi chú'); setEditingNote(null) }
+  }
+
+  const handleTabChange = (nhom) => {
+    setActiveTab(nhom)
+    setFilterNguoi('')
+    setFilterDauRa('')
+  }
 
   if (loading) return <div className="text-gray-400 py-8 text-center">Đang tải dữ liệu...</div>
 
@@ -47,93 +69,127 @@ export default function MatranAnPham() {
     )
 
   return (
-    <div className="space-y-4">
-      {/* Header stats */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex gap-4">
-          <div>
-            <p className="text-xs text-gray-500">Tổng ấn phẩm</p>
-            <p className="text-2xl font-bold text-gray-800">{total}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Hoàn thành</p>
-            <p className="text-2xl font-bold text-green-600">{done}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Còn lại</p>
-            <p className="text-2xl font-bold text-yellow-600">{total - done}</p>
-          </div>
-        </div>
-        <select
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          value={filterPerson}
-          onChange={e => setFilterPerson(e.target.value)}
-        >
-          <option value="">Tất cả phụ trách</option>
-          {allPersons.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
-        <span className="text-sm text-gray-400">{filtered.length} / {total} ấn phẩm</span>
+    <div className="space-y-0">
+      {/* Tab bar ngang theo Nhóm sản phẩm */}
+      <div className="flex flex-wrap gap-1 border-b border-gray-200">
+        {allNhom.map(nhom => {
+          const items = marketing.filter(m => m.nhom_san_pham === nhom)
+          const done = items.filter(m => m.trang_thai === '✓').length
+          const pct = items.length ? Math.round((done / items.length) * 100) : 0
+          const isActive = activeTab === nhom
+          return (
+            <button
+              key={nhom}
+              onClick={() => handleTabChange(nhom)}
+              className={`relative px-4 py-2.5 text-sm font-medium rounded-t-lg border border-b-0 transition-colors whitespace-nowrap
+                ${isActive
+                  ? 'bg-white border-gray-200 text-indigo-700 -mb-px z-10'
+                  : 'bg-gray-50 border-transparent text-gray-500 hover:text-indigo-600 hover:bg-gray-100'
+                }`}
+            >
+              <span>{nhom}</span>
+              <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full font-semibold
+                ${pct >= 80 ? 'bg-green-100 text-green-700' : pct >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-indigo-50 text-indigo-500'}`}>
+                {pct}%
+              </span>
+              {isActive && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Progress bar tổng */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-        <div className="flex justify-between text-xs text-gray-500 mb-1">
-          <span>Tiến độ tổng thể</span>
-          <span>{total > 0 ? Math.round(done / total * 100) : 0}%</span>
+      {/* Panel nội dung */}
+      <div className="bg-white rounded-b-xl rounded-tr-xl border border-gray-200 shadow-sm overflow-hidden">
+        {/* Toolbar lọc */}
+        <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+          <select
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            value={filterDauRa}
+            onChange={e => setFilterDauRa(e.target.value)}
+          >
+            <option value="">Tất cả đầu ra</option>
+            {allDauRa.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <select
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            value={filterNguoi}
+            onChange={e => setFilterNguoi(e.target.value)}
+          >
+            <option value="">Tất cả phụ trách</option>
+            {allNguoi.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <span className="ml-auto text-sm text-gray-400 self-center">{tabItems.length} đầu ra</span>
         </div>
-        <div className="bg-gray-100 rounded-full h-3">
-          <div
-            className="bg-indigo-500 h-3 rounded-full transition-all"
-            style={{ width: `${total > 0 ? Math.round(done / total * 100) : 0}%` }}
-          />
-        </div>
-      </div>
 
-      {/* Bảng */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="px-3 py-3 text-left w-10">STT</th>
-                <th className="px-3 py-3 text-left">Hạng mục</th>
-                <th className="px-3 py-3 text-left">Sản phẩm</th>
-                <th className="px-3 py-3 text-left w-28">Phụ trách</th>
-                <th className="px-3 py-3 text-left w-24">Deadline</th>
-                <th className="px-3 py-3 text-center w-24">Trạng thái</th>
-                <th className="px-3 py-3 text-left w-36">Ghi chú</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.map(m => (
-                <tr key={m.id} className={`hover:bg-gray-50 ${m.trang_thai === '✓' ? 'opacity-60' : ''}`}>
-                  <td className="px-3 py-3 text-gray-400">{m.stt}</td>
-                  <td className="px-3 py-3 font-medium text-gray-800">{m.hang_muc}</td>
-                  <td className="px-3 py-3 text-gray-700">{m.san_pham}</td>
-                  <td className="px-3 py-3 text-gray-600 text-xs">{m.nguoi_phu_trach}</td>
-                  <td className={`px-3 py-3 text-xs ${isOverdueDate(m.deadline) && m.trang_thai !== '✓' ? 'text-red-600 font-semibold' : 'text-gray-600'}`}>
-                    {m.deadline || '—'}
-                    {isOverdueDate(m.deadline) && m.trang_thai !== '✓' && ' ⚠️'}
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <button
-                      onClick={() => toggleStatus(m)}
-                      className={`px-2 py-1 rounded-lg border text-xs font-medium transition-colors ${STATUS_STYLE[m.trang_thai] || STATUS_STYLE['□']}`}
-                    >
-                      {m.trang_thai || '□'}
-                    </button>
-                  </td>
-                  <td className="px-3 py-3 text-xs text-gray-500">{m.ghi_chu}</td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
+        {/* Bảng */}
+        {tabItems.length === 0 ? (
+          <div className="py-12 text-center text-gray-400 text-sm">Không có dữ liệu</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-xs text-gray-400 uppercase border-b border-gray-100">
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">Không có dữ liệu</td>
+                  <th className="px-3 py-2 text-left w-40">Đối tượng</th>
+                  <th className="px-3 py-2 text-left">Đầu ra bắt buộc</th>
+                  <th className="px-3 py-2 text-left w-20">Đơn vị KPI</th>
+                  <th className="px-3 py-2 text-left w-32">KPI sản lượng</th>
+                  <th className="px-3 py-2 text-left w-48">KPI chất lượng</th>
+                  <th className="px-3 py-2 text-left w-28">Phụ trách chính</th>
+                  <th className="px-3 py-2 text-left w-28">Phối hợp</th>
+                  <th className="px-3 py-2 text-center w-20">Trạng thái</th>
+                  <th className="px-3 py-2 text-left w-36">Ghi chú</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {tabItems.map(m => (
+                  <tr key={m.id} className={`hover:bg-gray-50 ${m.trang_thai === '✓' ? 'opacity-60' : ''}`}>
+                    <td className="px-3 py-3 text-xs text-indigo-700 font-medium">{m.doi_tuong}</td>
+                    <td className="px-3 py-3 font-medium text-gray-800">{m.dau_ra}</td>
+                    <td className="px-3 py-3 text-xs text-gray-500">{m.don_vi_kpi}</td>
+                    <td className="px-3 py-3 text-xs text-gray-600">{m.kpi_san_luong}</td>
+                    <td className="px-3 py-3 text-xs text-gray-500">{m.kpi_chat_luong}</td>
+                    <td className="px-3 py-3">
+                      <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded font-medium">{m.nguoi_phu_trach}</span>
+                    </td>
+                    <td className="px-3 py-3 text-xs text-gray-500">{m.nguoi_phoi_hop}</td>
+                    <td className="px-3 py-3 text-center">
+                      <button
+                        onClick={() => toggleStatus(m)}
+                        className={`px-2 py-1 rounded-lg border text-xs font-medium transition-colors ${STATUS_STYLE[m.trang_thai] || STATUS_STYLE['□']}`}
+                        title="Click để đổi trạng thái"
+                      >
+                        {m.trang_thai || '□'}
+                      </button>
+                    </td>
+                    <td className="px-3 py-3">
+                      {editingNote === m.id ? (
+                        <div className="flex gap-1">
+                          <input
+                            className="border border-indigo-200 rounded px-2 py-1 text-xs flex-1 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                            value={noteValue}
+                            onChange={e => setNoteValue(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveNote(m); if (e.key === 'Escape') setEditingNote(null) }}
+                            autoFocus
+                          />
+                          <button onClick={() => saveNote(m)} className="text-indigo-600 text-xs hover:underline">Lưu</button>
+                          <button onClick={() => setEditingNote(null)} className="text-gray-400 text-xs hover:underline">Hủy</button>
+                        </div>
+                      ) : (
+                        <span
+                          className="text-xs text-gray-500 cursor-pointer hover:text-indigo-600 block truncate max-w-[130px]"
+                          onClick={() => { setEditingNote(m.id); setNoteValue(m.ghi_chu || '') }}
+                          title={m.ghi_chu || 'Click để thêm ghi chú'}
+                        >
+                          {m.ghi_chu || <span className="text-gray-300 italic">Thêm ghi chú...</span>}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

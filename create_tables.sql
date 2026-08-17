@@ -30,10 +30,14 @@ create table if not exists kl_kpi (
 create table if not exists kl_marketing (
   id uuid primary key default gen_random_uuid(),
   stt integer,
-  hang_muc text,
-  san_pham text,
+  nhom_san_pham text,
+  doi_tuong text,
+  dau_ra text,
+  don_vi_kpi text,
+  kpi_san_luong text,
+  kpi_chat_luong text,
   nguoi_phu_trach text,
-  deadline date,
+  nguoi_phoi_hop text,
   trang_thai text default '□',
   ghi_chu text,
   created_at timestamptz default now()
