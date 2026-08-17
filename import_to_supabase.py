@@ -120,20 +120,18 @@ def parse_marketing(excel_path):
     df = pd.read_excel(excel_path, sheet_name='Marketing Output Matrix', header=0)
     items = []
 
-    for i, (_, row) in enumerate(df.iterrows()):
+    stt_counter = 0
+    for _, row in df.iterrows():
         v = [str(c).strip() if pd.notna(c) and str(c).strip() != 'nan' else '' for c in row]
 
-        # Bỏ qua hàng trống (không có nhóm sản phẩm lẫn đầu ra)
         nhom = v[0] if len(v) > 0 else ''
-        dau_ra = v[2] if len(v) > 2 else ''
-        if not nhom and not dau_ra:
+        dau_ra_raw = v[2] if len(v) > 2 else ''
+        if not nhom and not dau_ra_raw:
             continue
 
-        items.append({
-            'stt': i + 1,
+        base = {
             'nhom_san_pham': nhom,
             'doi_tuong': v[1] if len(v) > 1 else '',
-            'dau_ra': dau_ra,
             'don_vi_kpi': v[3] if len(v) > 3 else '',
             'kpi_san_luong': v[4] if len(v) > 4 else '',
             'kpi_chat_luong': v[5] if len(v) > 5 else '',
@@ -141,7 +139,16 @@ def parse_marketing(excel_path):
             'nguoi_phoi_hop': v[7] if len(v) > 7 else '',
             'trang_thai': '□',
             'ghi_chu': '',
-        })
+        }
+
+        # Tách "Brochure/Sổ tay/Catalog" → 2 dòng riêng
+        if 'Sổ tay' in dau_ra_raw and 'Brochure' in dau_ra_raw:
+            for dau_ra in ['Brochure/Catalog', 'Sổ tay']:
+                stt_counter += 1
+                items.append({**base, 'stt': stt_counter, 'dau_ra': dau_ra})
+        else:
+            stt_counter += 1
+            items.append({**base, 'stt': stt_counter, 'dau_ra': dau_ra_raw})
 
     return items
 
