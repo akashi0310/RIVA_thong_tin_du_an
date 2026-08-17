@@ -11,20 +11,17 @@ const STATUS_STYLE = {
 
 export default function MatranAnPham() {
   const { marketing, loading, fetchAll, updateMarketing } = useKhoiLuongStore()
-  const [searchDauRa, setSearchDauRa] = useState('')
-  const [filterNhom, setFilterNhom] = useState('')
+  const [search, setSearch] = useState('')
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
 
   useEffect(() => { fetchAll() }, [])
 
-  const allDauRa = [...new Set(marketing.map(m => m.dau_ra).filter(Boolean))]
-  const allNhom = [...new Set(marketing.map(m => m.nhom_san_pham).filter(Boolean))]
-
   const filtered = marketing.filter(m => {
-    if (searchDauRa && !m.dau_ra?.toLowerCase().includes(searchDauRa.toLowerCase())) return false
-    if (filterNhom && m.nhom_san_pham !== filterNhom) return false
-    return true
+    if (!search) return true
+    const q = search.toLowerCase()
+    return [m.nhom_san_pham, m.doi_tuong, m.dau_ra, m.nguoi_phu_trach, m.nguoi_phoi_hop]
+      .some(f => (f || '').toLowerCase().includes(q))
   })
 
   const toggleStatus = async (item) => {
@@ -57,25 +54,17 @@ export default function MatranAnPham() {
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="text"
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          placeholder="Tìm đầu ra (Brochure, Video...)"
-          value={searchDauRa}
-          onChange={e => setSearchDauRa(e.target.value)}
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          placeholder="Tìm theo nhóm, đối tượng, đầu ra... (Kỳ thi, ASMO, Brochure...)"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
         />
-        <select
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          value={filterNhom}
-          onChange={e => setFilterNhom(e.target.value)}
-        >
-          <option value="">Tất cả nhóm sản phẩm</option>
-          {allNhom.map(n => <option key={n} value={n}>{n}</option>)}
-        </select>
-        {(searchDauRa || filterNhom) && (
+        {search && (
           <button
             className="text-xs text-gray-400 hover:text-indigo-600 underline"
-            onClick={() => { setSearchDauRa(''); setFilterNhom('') }}
+            onClick={() => setSearch('')}
           >
-            Xóa bộ lọc
+            Xóa
           </button>
         )}
         <span className="ml-auto text-sm text-gray-400">
