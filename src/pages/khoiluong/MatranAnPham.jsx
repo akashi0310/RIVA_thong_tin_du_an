@@ -6,27 +6,26 @@ const STATUS_CYCLE = ['□', '✓', '✗']
 const STATUS_STYLE = {
   '✓': 'bg-green-100 text-green-700 border-green-300',
   '✗': 'bg-red-100 text-red-600 border-red-300',
-  '□': 'bg-gray-50 text-gray-400 border-gray-200',
+  '□': 'bg-gray-100 text-gray-500 border-gray-300',
 }
 
 export default function MatranAnPham() {
   const { marketing, loading, fetchAll, updateMarketing } = useKhoiLuongStore()
+  const [activeTab, setActiveTab] = useState(null)
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
-  const [expandedCell, setExpandedCell] = useState(null) // "dau_ra__nhom"
 
   useEffect(() => { fetchAll() }, [])
 
-  // Danh sách hàng (Đầu ra) và cột (Nhóm sản phẩm) — giữ thứ tự từ data
+  // Tab theo Đầu ra bắt buộc (giữ thứ tự từ data)
   const allDauRa = [...new Set(marketing.map(m => m.dau_ra).filter(Boolean))]
-  const allNhom = [...new Set(marketing.map(m => m.nhom_san_pham).filter(Boolean))]
 
-  // Lookup nhanh: dau_ra → nhom → record
-  const lookup = {}
-  for (const m of marketing) {
-    if (!lookup[m.dau_ra]) lookup[m.dau_ra] = {}
-    lookup[m.dau_ra][m.nhom_san_pham] = m
-  }
+  useEffect(() => {
+    if (allDauRa.length && activeTab === null) setActiveTab(allDauRa[0])
+  }, [marketing])
+
+  // Các row trong tab hiện tại
+  const tabItems = marketing.filter(m => m.dau_ra === activeTab)
 
   const toggleStatus = async (item) => {
     const cur = STATUS_CYCLE.indexOf(item.trang_thai)
@@ -41,8 +40,6 @@ export default function MatranAnPham() {
     else { toast.success('Đã lưu ghi chú'); setEditingNote(null) }
   }
 
-  const cellKey = (dau_ra, nhom) => `${dau_ra}__${nhom}`
-
   if (loading) return <div className="text-gray-400 py-8 text-center">Đang tải dữ liệu...</div>
 
   if (marketing.length === 0)
@@ -52,134 +49,108 @@ export default function MatranAnPham() {
       </div>
     )
 
-  const done = marketing.filter(m => m.trang_thai === '✓').length
-  const total = marketing.length
-
   return (
-    <div className="space-y-4">
-      {/* Stats bar */}
-      <div className="flex items-center gap-4">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-2 flex gap-5 text-sm">
-          <span className="text-gray-500">Tổng: <strong className="text-gray-800">{total}</strong></span>
-          <span className="text-gray-500">Hoàn thành: <strong className="text-green-600">{done}</strong></span>
-          <span className="text-gray-500">Còn lại: <strong className="text-yellow-600">{total - done}</strong></span>
-        </div>
-        <div className="flex-1 bg-gray-100 rounded-full h-2 max-w-xs">
-          <div
-            className="bg-indigo-500 h-2 rounded-full transition-all"
-            style={{ width: `${total > 0 ? Math.round(done / total * 100) : 0}%` }}
-          />
-        </div>
-        <span className="text-sm text-gray-400">{total > 0 ? Math.round(done / total * 100) : 0}%</span>
+    <div className="space-y-0">
+      {/* Tab ngang theo Đầu ra bắt buộc */}
+      <div className="flex flex-wrap gap-1 border-b border-gray-200">
+        {allDauRa.map(dauRa => {
+          const items = marketing.filter(m => m.dau_ra === dauRa)
+          const done = items.filter(m => m.trang_thai === '✓').length
+          const isActive = activeTab === dauRa
+          return (
+            <button
+              key={dauRa}
+              onClick={() => setActiveTab(dauRa)}
+              className={`relative px-4 py-2.5 text-sm font-medium rounded-t-lg border border-b-0 transition-colors whitespace-nowrap
+                ${isActive
+                  ? 'bg-white border-gray-200 text-indigo-700 -mb-px z-10'
+                  : 'bg-gray-50 border-transparent text-gray-500 hover:text-indigo-600 hover:bg-gray-100'
+                }`}
+            >
+              {dauRa}
+              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-semibold
+                ${done === items.length && items.length > 0
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-indigo-50 text-indigo-400'
+                }`}>
+                {done}/{items.length}
+              </span>
+              {isActive && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Ma trận */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-indigo-50">
-                <th className="px-4 py-3 text-left text-xs font-bold text-indigo-700 uppercase border-b border-r border-indigo-100 w-44 sticky left-0 bg-indigo-50 z-10">
-                  Đầu ra bắt buộc
-                </th>
-                {allNhom.map(nhom => (
-                  <th key={nhom} className="px-3 py-3 text-center text-xs font-bold text-indigo-700 uppercase border-b border-r border-indigo-100 min-w-[160px]">
-                    {nhom}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {allDauRa.map((dau_ra, rowIdx) => (
-                <tr key={dau_ra} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                  {/* Cột Đầu ra — sticky */}
-                  <td className={`px-4 py-3 font-semibold text-gray-800 text-xs border-b border-r border-gray-100 sticky left-0 z-10 ${rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                    {dau_ra}
-                  </td>
-
-                  {/* Các ô giao nhau */}
-                  {allNhom.map(nhom => {
-                    const item = lookup[dau_ra]?.[nhom]
-                    const key = cellKey(dau_ra, nhom)
-                    const isExpanded = expandedCell === key
-
-                    if (!item) {
-                      return (
-                        <td key={nhom} className="px-3 py-3 text-center border-b border-r border-gray-100 text-gray-200 text-lg">
-                          —
-                        </td>
-                      )
-                    }
-
-                    return (
-                      <td
-                        key={nhom}
-                        className="px-3 py-2 border-b border-r border-gray-100 align-top cursor-pointer"
-                        onClick={() => setExpandedCell(isExpanded ? null : key)}
-                      >
-                        {/* Compact view */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 justify-between">
-                            <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium truncate max-w-[90px]">
-                              {item.nguoi_phu_trach}
-                            </span>
-                            <button
-                              onClick={e => { e.stopPropagation(); toggleStatus(item) }}
-                              className={`px-1.5 py-0.5 rounded border text-xs font-medium transition-colors flex-shrink-0 ${STATUS_STYLE[item.trang_thai] || STATUS_STYLE['□']}`}
-                            >
-                              {item.trang_thai || '□'}
-                            </button>
-                          </div>
-                          <p className="text-xs text-gray-500 font-medium">{item.kpi_san_luong}</p>
-
-                          {/* Expanded: hiện thêm chi tiết */}
-                          {isExpanded && (
-                            <div className="mt-2 pt-2 border-t border-gray-100 space-y-1.5 text-xs" onClick={e => e.stopPropagation()}>
-                              <div>
-                                <span className="text-gray-400">Đơn vị KPI: </span>
-                                <span className="text-gray-600">{item.don_vi_kpi}</span>
-                              </div>
-                              <div>
-                                <span className="text-gray-400">Chất lượng: </span>
-                                <span className="text-gray-600">{item.kpi_chat_luong}</span>
-                              </div>
-                              <div>
-                                <span className="text-gray-400">Phối hợp: </span>
-                                <span className="text-gray-600">{item.nguoi_phoi_hop}</span>
-                              </div>
-                              {/* Ghi chú */}
-                              {editingNote === item.id ? (
-                                <div className="flex gap-1 pt-1">
-                                  <input
-                                    className="border border-indigo-200 rounded px-2 py-1 text-xs flex-1 focus:outline-none focus:ring-1 focus:ring-indigo-300"
-                                    value={noteValue}
-                                    onChange={e => setNoteValue(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') saveNote(item); if (e.key === 'Escape') setEditingNote(null) }}
-                                    autoFocus
-                                  />
-                                  <button onClick={() => saveNote(item)} className="text-indigo-600 text-xs hover:underline">Lưu</button>
-                                  <button onClick={() => setEditingNote(null)} className="text-gray-400 text-xs hover:underline">Hủy</button>
-                                </div>
-                              ) : (
-                                <div
-                                  className="text-gray-400 italic cursor-pointer hover:text-indigo-500 pt-0.5"
-                                  onClick={() => { setEditingNote(item.id); setNoteValue(item.ghi_chu || '') }}
-                                >
-                                  {item.ghi_chu || 'Thêm ghi chú...'}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    )
-                  })}
+      {/* Panel nội dung */}
+      <div className="bg-white rounded-b-xl rounded-tr-xl border border-gray-200 shadow-sm overflow-hidden">
+        {tabItems.length === 0 ? (
+          <div className="py-12 text-center text-gray-400 text-sm">Không có dữ liệu</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-xs text-gray-400 uppercase border-b border-gray-100">
+                <tr>
+                  <th className="px-4 py-2 text-left w-32">Nhóm sản phẩm</th>
+                  <th className="px-4 py-2 text-left">Đối tượng</th>
+                  <th className="px-4 py-2 text-left w-20">Đơn vị KPI</th>
+                  <th className="px-4 py-2 text-left w-32">KPI sản lượng</th>
+                  <th className="px-4 py-2 text-left w-48">KPI chất lượng</th>
+                  <th className="px-4 py-2 text-left w-28">Phụ trách</th>
+                  <th className="px-4 py-2 text-left w-28">Phối hợp</th>
+                  <th className="px-4 py-2 text-center w-20">Trạng thái</th>
+                  <th className="px-4 py-2 text-left w-36">Ghi chú</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-gray-300 px-4 py-2 border-t border-gray-50">Click vào ô để xem chi tiết KPI</p>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {tabItems.map(m => (
+                  <tr key={m.id} className={`hover:bg-gray-50 ${m.trang_thai === '✓' ? 'opacity-60' : ''}`}>
+                    <td className="px-4 py-3">
+                      <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded font-medium">{m.nhom_san_pham}</span>
+                    </td>
+                    <td className="px-4 py-3 font-medium text-gray-800 text-xs">{m.doi_tuong}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{m.don_vi_kpi}</td>
+                    <td className="px-4 py-3 text-xs text-gray-600 font-medium">{m.kpi_san_luong}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{m.kpi_chat_luong}</td>
+                    <td className="px-4 py-3 text-xs text-gray-700">{m.nguoi_phu_trach}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{m.nguoi_phoi_hop}</td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => toggleStatus(m)}
+                        className={`px-2 py-1 rounded-lg border text-xs font-medium transition-colors ${STATUS_STYLE[m.trang_thai] || STATUS_STYLE['□']}`}
+                        title="Click để đổi trạng thái"
+                      >
+                        {m.trang_thai || '□'}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3">
+                      {editingNote === m.id ? (
+                        <div className="flex gap-1">
+                          <input
+                            className="border border-indigo-200 rounded px-2 py-1 text-xs flex-1 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                            value={noteValue}
+                            onChange={e => setNoteValue(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveNote(m); if (e.key === 'Escape') setEditingNote(null) }}
+                            autoFocus
+                          />
+                          <button onClick={() => saveNote(m)} className="text-indigo-600 text-xs hover:underline">Lưu</button>
+                          <button onClick={() => setEditingNote(null)} className="text-gray-400 text-xs hover:underline">Hủy</button>
+                        </div>
+                      ) : (
+                        <span
+                          className="text-xs text-gray-500 cursor-pointer hover:text-indigo-600 block truncate max-w-[130px]"
+                          onClick={() => { setEditingNote(m.id); setNoteValue(m.ghi_chu || '') }}
+                          title={m.ghi_chu || 'Click để thêm ghi chú'}
+                        >
+                          {m.ghi_chu || <span className="text-gray-300 italic">Thêm ghi chú...</span>}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

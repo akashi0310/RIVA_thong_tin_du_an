@@ -19,20 +19,20 @@ function ProgressBar({ value, max }) {
 
 export default function KPINhanVien() {
   const { kpi, loading, fetchAll, updateKPI } = useKhoiLuongStore()
-  const [editing, setEditing] = useState(null)
+  const [editing, setEditing] = useState(null) // { id, field }
   const [editVal, setEditVal] = useState('')
 
   useEffect(() => { fetchAll() }, [])
 
-  const startEdit = (k) => {
-    setEditing(k.id)
-    setEditVal(String(k.thuc_te ?? ''))
+  const startEdit = (k, field) => {
+    setEditing({ id: k.id, field })
+    setEditVal(String(k[field] ?? ''))
   }
 
   const saveEdit = async (k) => {
     const val = parseFloat(editVal)
     if (isNaN(val)) { toast.error('Giá trị không hợp lệ'); return }
-    const { error } = await updateKPI(k.id, { thuc_te: val })
+    const { error } = await updateKPI(k.id, { [editing.field]: val })
     if (error) toast.error('Không thể cập nhật KPI')
     else { toast.success('Đã cập nhật KPI'); setEditing(null) }
   }
@@ -76,7 +76,7 @@ export default function KPINhanVien() {
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
           <h2 className="font-semibold text-gray-800">Danh sách chỉ số KPI</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Click vào giá trị "Thực tế" để chỉnh sửa</p>
+          <p className="text-xs text-gray-400 mt-0.5">Click vào "Mục tiêu" hoặc "Thực tế" để nhập số</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -84,7 +84,7 @@ export default function KPINhanVien() {
               <tr>
                 <th className="px-4 py-3 text-left">Tên chỉ số KPI</th>
                 <th className="px-4 py-3 text-center w-24">Đơn vị</th>
-                <th className="px-4 py-3 text-center w-24">Mục tiêu</th>
+                <th className="px-4 py-3 text-center w-28">Mục tiêu</th>
                 <th className="px-4 py-3 text-center w-28">Thực tế</th>
                 <th className="px-4 py-3 text-left">Tiến độ</th>
                 <th className="px-4 py-3 text-left w-40">Ghi chú</th>
@@ -95,9 +95,10 @@ export default function KPINhanVien() {
                 <tr key={k.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-800">{k.ten_kpi}</td>
                   <td className="px-4 py-3 text-center text-gray-500 text-xs">{k.don_vi}</td>
-                  <td className="px-4 py-3 text-center text-gray-700 font-medium">{k.muc_tieu ?? '—'}</td>
+
+                  {/* Mục tiêu — có thể chỉnh sửa */}
                   <td className="px-4 py-3 text-center">
-                    {editing === k.id ? (
+                    {editing?.id === k.id && editing?.field === 'muc_tieu' ? (
                       <div className="flex items-center gap-1 justify-center">
                         <input
                           type="number"
@@ -107,19 +108,46 @@ export default function KPINhanVien() {
                           onKeyDown={e => { if (e.key === 'Enter') saveEdit(k); if (e.key === 'Escape') setEditing(null) }}
                           autoFocus
                         />
-                        <button onClick={() => saveEdit(k)} className="text-indigo-600 text-xs hover:underline">✓</button>
-                        <button onClick={() => setEditing(null)} className="text-gray-400 text-xs hover:underline">✗</button>
+                        <button onClick={() => saveEdit(k)} className="text-indigo-600 text-xs">✓</button>
+                        <button onClick={() => setEditing(null)} className="text-gray-400 text-xs">✗</button>
                       </div>
                     ) : (
                       <button
-                        className="text-indigo-600 font-semibold hover:underline cursor-pointer"
-                        onClick={() => startEdit(k)}
-                        title="Click để chỉnh sửa"
+                        className={`font-semibold hover:underline cursor-pointer ${k.muc_tieu != null ? 'text-gray-700' : 'text-gray-300 italic text-xs font-normal'}`}
+                        onClick={() => startEdit(k, 'muc_tieu')}
+                        title="Click để nhập mục tiêu"
                       >
-                        {k.thuc_te ?? <span className="text-gray-300 italic text-xs">Nhập...</span>}
+                        {k.muc_tieu ?? 'Nhập...'}
                       </button>
                     )}
                   </td>
+
+                  {/* Thực tế — có thể chỉnh sửa */}
+                  <td className="px-4 py-3 text-center">
+                    {editing?.id === k.id && editing?.field === 'thuc_te' ? (
+                      <div className="flex items-center gap-1 justify-center">
+                        <input
+                          type="number"
+                          className="border border-indigo-300 rounded px-2 py-0.5 text-xs w-20 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                          value={editVal}
+                          onChange={e => setEditVal(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') saveEdit(k); if (e.key === 'Escape') setEditing(null) }}
+                          autoFocus
+                        />
+                        <button onClick={() => saveEdit(k)} className="text-indigo-600 text-xs">✓</button>
+                        <button onClick={() => setEditing(null)} className="text-gray-400 text-xs">✗</button>
+                      </div>
+                    ) : (
+                      <button
+                        className={`font-semibold hover:underline cursor-pointer ${k.thuc_te != null ? 'text-indigo-600' : 'text-gray-300 italic text-xs font-normal'}`}
+                        onClick={() => startEdit(k, 'thuc_te')}
+                        title="Click để nhập thực tế"
+                      >
+                        {k.thuc_te ?? 'Nhập...'}
+                      </button>
+                    )}
+                  </td>
+
                   <td className="px-4 py-3 w-48">
                     {k.muc_tieu > 0
                       ? <ProgressBar value={k.thuc_te || 0} max={k.muc_tieu} />
