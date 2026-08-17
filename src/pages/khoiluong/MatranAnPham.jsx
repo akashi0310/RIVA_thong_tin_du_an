@@ -11,25 +11,18 @@ const STATUS_STYLE = {
 
 export default function MatranAnPham() {
   const { marketing, loading, fetchAll, updateMarketing } = useKhoiLuongStore()
-  const [activeTab, setActiveTab] = useState(null)
+  const [filterDauRa, setFilterDauRa] = useState('')
   const [filterNhom, setFilterNhom] = useState('')
   const [editingNote, setEditingNote] = useState(null)
   const [noteValue, setNoteValue] = useState('')
 
   useEffect(() => { fetchAll() }, [])
 
-  // Tab theo Đầu ra bắt buộc (giữ thứ tự từ data)
   const allDauRa = [...new Set(marketing.map(m => m.dau_ra).filter(Boolean))]
-
-  useEffect(() => {
-    if (allDauRa.length && activeTab === null) setActiveTab(allDauRa[0])
-  }, [marketing])
-
   const allNhom = [...new Set(marketing.map(m => m.nhom_san_pham).filter(Boolean))]
 
-  // Các row trong tab hiện tại
-  const tabItems = marketing.filter(m => {
-    if (m.dau_ra !== activeTab) return false
+  const filtered = marketing.filter(m => {
+    if (filterDauRa && m.dau_ra !== filterDauRa) return false
     if (filterNhom && m.nhom_san_pham !== filterNhom) return false
     return true
   })
@@ -56,54 +49,44 @@ export default function MatranAnPham() {
       </div>
     )
 
+  const done = marketing.filter(m => m.trang_thai === '✓').length
+
   return (
-    <div className="space-y-0">
-      {/* Tab ngang theo Đầu ra bắt buộc */}
-      <div className="flex flex-wrap gap-1 border-b border-gray-200">
-        {allDauRa.map(dauRa => {
-          const items = marketing.filter(m => m.dau_ra === dauRa)
-          const done = items.filter(m => m.trang_thai === '✓').length
-          const isActive = activeTab === dauRa
-          return (
-            <button
-              key={dauRa}
-              onClick={() => setActiveTab(dauRa)}
-              className={`relative px-4 py-2.5 text-sm font-medium rounded-t-lg border border-b-0 transition-colors whitespace-nowrap
-                ${isActive
-                  ? 'bg-white border-gray-200 text-indigo-700 -mb-px z-10'
-                  : 'bg-gray-50 border-transparent text-gray-500 hover:text-indigo-600 hover:bg-gray-100'
-                }`}
-            >
-              {dauRa}
-              <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-semibold
-                ${done === items.length && items.length > 0
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-indigo-50 text-indigo-400'
-                }`}>
-                {done}/{items.length}
-              </span>
-              {isActive && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
-            </button>
-          )
-        })}
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          value={filterDauRa}
+          onChange={e => setFilterDauRa(e.target.value)}
+        >
+          <option value="">Tất cả đầu ra</option>
+          {allDauRa.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          value={filterNhom}
+          onChange={e => setFilterNhom(e.target.value)}
+        >
+          <option value="">Tất cả nhóm sản phẩm</option>
+          {allNhom.map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+        {(filterDauRa || filterNhom) && (
+          <button
+            className="text-xs text-gray-400 hover:text-indigo-600 underline"
+            onClick={() => { setFilterDauRa(''); setFilterNhom('') }}
+          >
+            Xóa bộ lọc
+          </button>
+        )}
+        <span className="ml-auto text-sm text-gray-400">
+          {filtered.length} / {marketing.length} mục &nbsp;·&nbsp; Hoàn thành: {done}
+        </span>
       </div>
 
-      {/* Panel nội dung */}
-      <div className="bg-white rounded-b-xl rounded-tr-xl border border-gray-200 shadow-sm overflow-hidden">
-        {/* Filter nhóm sản phẩm */}
-        <div className="flex gap-2 px-4 py-2.5 border-b border-gray-100 bg-gray-50/50">
-          <select
-            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-            value={filterNhom}
-            onChange={e => setFilterNhom(e.target.value)}
-          >
-            <option value="">Tất cả nhóm sản phẩm</option>
-            {allNhom.map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-          <span className="text-sm text-gray-400 self-center">{tabItems.length} mục</span>
-        </div>
-
-        {tabItems.length === 0 ? (
+      {/* Bảng */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        {filtered.length === 0 ? (
           <div className="py-12 text-center text-gray-400 text-sm">Không có dữ liệu</div>
         ) : (
           <div className="overflow-x-auto">
@@ -111,8 +94,8 @@ export default function MatranAnPham() {
               <thead className="bg-gray-50 text-xs text-gray-400 uppercase border-b border-gray-100">
                 <tr>
                   <th className="px-4 py-2 text-left w-32">Nhóm sản phẩm</th>
-                  <th className="px-4 py-2 text-left">Đối tượng</th>
-                  <th className="px-4 py-2 text-left w-20">Đơn vị KPI</th>
+                  <th className="px-4 py-2 text-left w-44">Đối tượng</th>
+                  <th className="px-4 py-2 text-left">Đầu ra bắt buộc</th>
                   <th className="px-4 py-2 text-left w-32">KPI sản lượng</th>
                   <th className="px-4 py-2 text-left w-48">KPI chất lượng</th>
                   <th className="px-4 py-2 text-left w-28">Phụ trách</th>
@@ -122,13 +105,13 @@ export default function MatranAnPham() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {tabItems.map(m => (
+                {filtered.map(m => (
                   <tr key={m.id} className={`hover:bg-gray-50 ${m.trang_thai === '✓' ? 'opacity-60' : ''}`}>
                     <td className="px-4 py-3">
                       <span className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded font-medium">{m.nhom_san_pham}</span>
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-800 text-xs">{m.doi_tuong}</td>
-                    <td className="px-4 py-3 text-xs text-gray-500">{m.don_vi_kpi}</td>
+                    <td className="px-4 py-3 text-xs text-gray-600">{m.doi_tuong}</td>
+                    <td className="px-4 py-3 font-medium text-gray-800">{m.dau_ra}</td>
                     <td className="px-4 py-3 text-xs text-gray-600 font-medium">{m.kpi_san_luong}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{m.kpi_chat_luong}</td>
                     <td className="px-4 py-3 text-xs text-gray-700">{m.nguoi_phu_trach}</td>
