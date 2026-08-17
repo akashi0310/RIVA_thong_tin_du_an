@@ -23,6 +23,19 @@ import DuHocDashboard from './pages/duhoc/DuHocDashboard'
 import OnLuyenLayout from './pages/onluyen/OnLuyenLayout'
 import OnLuyenDashboard from './pages/onluyen/OnLuyenDashboard'
 
+import CSKHLayout from './pages/cskh/CSKHLayout'
+import CSKHDashboard from './pages/cskh/CSKHDashboard'
+import MessageInbox from './pages/cskh/MessageInbox'
+import FAQManager from './pages/cskh/FAQManager'
+import WebFormPage from './pages/cskh/WebFormPage'
+
+import KhoiLuongLayout from './pages/khoiluong/KhoiLuongLayout'
+import KhoiLuongDashboard from './pages/khoiluong/KhoiLuongDashboard'
+import DanhMucCongViec from './pages/khoiluong/DanhMucCongViec'
+import KPINhanVien from './pages/khoiluong/KPINhanVien'
+import MatranAnPham from './pages/khoiluong/MatranAnPham'
+import NhanVienView from './pages/khoiluong/NhanVienView'
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -59,6 +72,23 @@ export default function App() {
           <Route path="on-luyen" element={<OnLuyenLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<OnLuyenDashboard />} />
+          </Route>
+
+          <Route path="cskh" element={<CSKHLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<CSKHDashboard />} />
+            <Route path="inbox" element={<MessageInbox />} />
+            <Route path="faq" element={<FAQManager />} />
+            <Route path="web-form" element={<WebFormPage />} />
+          </Route>
+
+          <Route path="khoi-luong" element={<KhoiLuongLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<KhoiLuongDashboard />} />
+            <Route path="cong-viec" element={<DanhMucCongViec />} />
+            <Route path="kpi" element={<KPINhanVien />} />
+            <Route path="an-pham" element={<MatranAnPham />} />
+            <Route path="nhan-vien" element={<NhanVienView />} />
           </Route>
         </Route>
       </Routes>

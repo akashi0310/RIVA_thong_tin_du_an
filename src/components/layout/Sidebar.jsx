@@ -14,6 +14,23 @@ const navItems = [
   { to: '/nckh', label: 'NCKH', icon: '🔬' },
   { to: '/du-hoc', label: 'Du học', icon: '✈️' },
   { to: '/on-luyen', label: 'Ôn luyện', icon: '📚' },
+  {
+    to: '/cskh', label: 'CSKH', icon: '💬', children: [
+      { to: '/cskh/dashboard', label: 'Dashboard' },
+      { to: '/cskh/inbox', label: 'Hộp thư' },
+      { to: '/cskh/faq', label: 'FAQ' },
+      { to: '/cskh/web-form', label: 'Web Form' },
+    ]
+  },
+  {
+    to: '/khoi-luong', label: 'Khối lượng', icon: '📊', children: [
+      { to: '/khoi-luong/dashboard', label: 'Tổng quan' },
+      { to: '/khoi-luong/cong-viec', label: 'Danh mục' },
+      { to: '/khoi-luong/kpi', label: 'KPI' },
+      { to: '/khoi-luong/an-pham', label: 'Ấn phẩm' },
+      { to: '/khoi-luong/nhan-vien', label: 'Nhân viên' },
+    ]
+  },
 ]
 
 export default function Sidebar({ open, onClose }) {

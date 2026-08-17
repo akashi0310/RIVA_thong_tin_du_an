@@ -4,6 +4,8 @@ import { useAsmoStore } from '../stores/asmoStore'
 import { useNckhStore } from '../stores/nckhStore'
 import { useDuhocStore } from '../stores/duhocStore'
 import { useOnluyenStore } from '../stores/onluyenStore'
+import { useCskhStore } from '../stores/cskhStore'
+import { useKhoiLuongStore } from '../stores/khoiluongStore'
 import { isOverdue } from '../utils/slaCalculator'
 import { computeKPI } from '../utils/kpiCalculator'
 
@@ -12,9 +14,11 @@ export default function Home() {
   const { projects, fetchProjects } = useNckhStore()
   const { students: duhocStudents, fetchStudents: fetchDuhoc } = useDuhocStore()
   const { students: onluyenStudents, fetchStudents: fetchOnluyen } = useOnluyenStore()
+  const { messages: cskhMessages, fetchMessages: fetchCskh } = useCskhStore()
+  const { congViec, fetchAll: fetchKhoiLuong } = useKhoiLuongStore()
 
   useEffect(() => {
-    fetchIncidents(); fetchTasks(); fetchProjects(); fetchDuhoc(); fetchOnluyen()
+    fetchIncidents(); fetchTasks(); fetchProjects(); fetchDuhoc(); fetchOnluyen(); fetchCskh(); fetchKhoiLuong()
   }, [])
 
   const kpi = computeKPI(incidents)
@@ -64,6 +68,26 @@ export default function Home() {
       ],
       desc: 'Quản lý học sinh ôn luyện thi cử',
     },
+    {
+      to: '/cskh/dashboard', label: 'CSKH', icon: '💬', color: 'teal',
+      stats: [
+        { label: 'Tin nhắn mới', value: cskhMessages.filter(m => m.status === 'Mới').length, urgent: cskhMessages.filter(m => m.status === 'Mới').length > 0 },
+        { label: 'Đang xử lý', value: cskhMessages.filter(m => m.status === 'Đang xử lý').length },
+        { label: 'Đã trả lời', value: cskhMessages.filter(m => m.status === 'Đã trả lời').length },
+        { label: 'Tổng tin nhắn', value: cskhMessages.length },
+      ],
+      desc: 'Chăm sóc phụ huynh — câu hỏi, phản hồi, FAQ',
+    },
+    {
+      to: '/khoi-luong/dashboard', label: 'Khối lượng', icon: '📊', color: 'indigo',
+      stats: [
+        { label: 'Tổng công việc', value: congViec.length },
+        { label: 'Hoàn thành', value: congViec.filter(t => t.trang_thai === '✓').length },
+        { label: 'Đang thực hiện', value: congViec.filter(t => t.trang_thai === '□').length },
+        { label: 'Trễ hạn', value: congViec.filter(t => t.deadline && new Date(t.deadline) < new Date(new Date().toDateString()) && t.trang_thai !== '✓').length, urgent: congViec.filter(t => t.deadline && new Date(t.deadline) < new Date(new Date().toDateString()) && t.trang_thai !== '✓').length > 0 },
+      ],
+      desc: 'Theo dõi khối lượng công việc & KPI toàn đội',
+    },
   ]
 
   const colorMap = {
@@ -71,6 +95,8 @@ export default function Home() {
     purple: { border: 'border-purple-200', icon: 'bg-purple-100', title: 'text-purple-700', btn: 'bg-purple-600 hover:bg-purple-700' },
     green: { border: 'border-green-200', icon: 'bg-green-100', title: 'text-green-700', btn: 'bg-green-600 hover:bg-green-700' },
     amber: { border: 'border-amber-200', icon: 'bg-amber-100', title: 'text-amber-700', btn: 'bg-amber-600 hover:bg-amber-700' },
+    teal: { border: 'border-teal-200', icon: 'bg-teal-100', title: 'text-teal-700', btn: 'bg-teal-600 hover:bg-teal-700' },
+    indigo: { border: 'border-indigo-200', icon: 'bg-indigo-100', title: 'text-indigo-700', btn: 'bg-indigo-600 hover:bg-indigo-700' },
   }
 
   return (
