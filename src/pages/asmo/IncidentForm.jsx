@@ -86,7 +86,7 @@ export default function IncidentForm() {
       const found = incidents.find(i => i.id === id)
       if (found) setForm({ ...empty, ...found })
     } else {
-      const code = generateIncidentCode(form.nhom_su_co, incidents)
+      const code = generateIncidentCode(form.kenh_phat_sinh, form.ngay, incidents)
       setForm(f => ({ ...f, ma_su_co: code }))
     }
   }, [id, incidents, isManager, authLoading])
@@ -98,8 +98,8 @@ export default function IncidentForm() {
       next.deadline_phanhoi = dl.deadlinePhanhoi || ''
       next.deadline_xu_ly = dl.deadlineXuLy || ''
     }
-    if (k === 'nhom_su_co' && !isEdit) {
-      next.ma_su_co = generateIncidentCode(v, incidents)
+    if ((k === 'kenh_phat_sinh' || k === 'ngay') && !isEdit) {
+      next.ma_su_co = generateIncidentCode(next.kenh_phat_sinh, next.ngay, incidents)
     }
     return next
   })

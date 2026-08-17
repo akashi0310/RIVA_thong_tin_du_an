@@ -19,6 +19,9 @@ const statusColors = {
   'Chưa bắt đầu': 'bg-gray-100 text-gray-600',
   'Đang thực hiện': 'bg-blue-100 text-blue-700',
   'Tạm dừng': 'bg-orange-100 text-orange-700',
+  'Mới': 'bg-red-100 text-red-700',
+  'Đã trả lời': 'bg-green-100 text-green-700',
+  'Đóng': 'bg-gray-100 text-gray-500',
 }
 
 export function StatusBadge({ status }) {
