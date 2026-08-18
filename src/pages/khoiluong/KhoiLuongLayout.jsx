@@ -7,7 +7,7 @@ const tabs = [
   { to: '/khoi-luong/cong-viec', label: '📋 Danh mục' },
   { to: '/khoi-luong/kpi', label: '🎯 KPI' },
   { to: '/khoi-luong/an-pham', label: '🖼 Ấn phẩm' },
-  { to: '/khoi-luong/nhan-vien', label: '👤 Nhân viên' },
+  { to: '/khoi-luong/nhan-vien', label: '📋 Phân công' },
 ]
 
 export default function KhoiLuongLayout() {

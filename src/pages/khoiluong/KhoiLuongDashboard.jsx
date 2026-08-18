@@ -48,14 +48,14 @@ export default function KhoiLuongDashboard() {
       {/* Bảng phân phối khối lượng theo nhân viên */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-800">Phân phối khối lượng theo nhân viên</h2>
+          <h2 className="font-semibold text-gray-800">Khối lượng theo Bộ phận</h2>
           <Link to="/khoi-luong/nhan-vien" className="text-xs text-indigo-600 hover:underline">Xem chi tiết →</Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
               <tr>
-                <th className="px-4 py-3 text-left">Nhân viên</th>
+                <th className="px-4 py-3 text-left">Bộ phận</th>
                 <th className="px-4 py-3 text-center">Tổng</th>
                 <th className="px-4 py-3 text-center">Hoàn thành</th>
                 <th className="px-4 py-3 text-center">Chờ duyệt</th>
