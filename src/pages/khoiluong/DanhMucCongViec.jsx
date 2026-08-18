@@ -43,7 +43,7 @@ export default function DanhMucCongViec() {
   const { congViec, loading, fetchAll, updateCongViec, addCongViec } = useKhoiLuongStore()
 
   const [search, setSearch] = useState('')
-  const [filterDuAn, setFilterDuAn] = useState('')
+  const [filterNhom2, setFilterNhom2] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterLoai, setFilterLoai] = useState('')
   const [editingNote, setEditingNote] = useState(null)
@@ -58,6 +58,7 @@ export default function DanhMucCongViec() {
   useEffect(() => { fetchAll() }, [])
 
   const allNhom = [...new Set(congViec.map(t => t.nhom_cap_1).filter(Boolean))]
+  const allNhom2 = [...new Set(congViec.filter(t => !activeTab || t.nhom_cap_1 === activeTab).map(t => t.nhom_cap_2).filter(Boolean))].sort()
   const allDuAn = [...new Set(congViec.map(t => t.du_an).filter(Boolean))].sort()
 
   const filtered = congViec.filter(t => {
@@ -65,7 +66,7 @@ export default function DanhMucCongViec() {
       const q = search.toLowerCase()
       if (![t.ten_cong_viec, t.nhom_cap_2, t.du_an, t.thuc_hien, t.san_pham].some(f => (f || '').toLowerCase().includes(q))) return false
     }
-    if (filterDuAn && t.du_an !== filterDuAn) return false
+    if (filterNhom2 && t.nhom_cap_2 !== filterNhom2) return false
     if (filterStatus === 'qua_han') { if (!isOverdue(t)) return false }
     else if (filterStatus && t.trang_thai !== filterStatus) return false
     if (filterLoai === 'phat_sinh' && t.loai_cong_viec !== 'phat_sinh') return false
@@ -142,11 +143,11 @@ export default function DanhMucCongViec() {
           />
           <select
             className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-            value={filterDuAn}
-            onChange={e => setFilterDuAn(e.target.value)}
+            value={filterNhom2}
+            onChange={e => setFilterNhom2(e.target.value)}
           >
-            <option value="">Tất cả dự án</option>
-            {allDuAn.map(d => <option key={d} value={d}>{d}</option>)}
+            <option value="">Tất cả nhóm việc</option>
+            {allNhom2.map(n => <option key={n} value={n}>{n}</option>)}
           </select>
           <select
             className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
