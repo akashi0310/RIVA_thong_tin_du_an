@@ -95,13 +95,15 @@ export const useKhoiLuongStore = create((set, get) => ({
     }
   },
 
-  // Thống kê theo người thực hiện (col H)
+  // Thống kê theo bộ phận (col thuc_hien), loại bỏ tên nhân viên cá nhân
   getPeopleStats: () => {
-    const { congViec } = get()
+    const { congViec, phanCong } = get()
+    const employeeNames = new Set(phanCong.map(r => r.ten_nhan_vien.trim().toLowerCase()))
     const people = {}
     for (const t of congViec) {
       const names = (t.thuc_hien || '').split(/[,/]/).map(s => s.trim()).filter(Boolean)
       for (const name of names) {
+        if (employeeNames.has(name.toLowerCase())) continue
         if (!people[name]) people[name] = { name, total: 0, done: 0, pending: 0 }
         people[name].total++
         if (t.trang_thai === '✓') people[name].done++
