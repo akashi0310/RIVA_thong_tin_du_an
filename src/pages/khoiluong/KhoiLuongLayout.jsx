@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
+import { useKhoiLuongStore } from '../../stores/khoiluongStore'
 
 const tabs = [
   { to: '/khoi-luong/dashboard', label: '📊 Tổng quan' },
@@ -9,6 +11,13 @@ const tabs = [
 ]
 
 export default function KhoiLuongLayout() {
+  const { subscribeRealtime } = useKhoiLuongStore()
+
+  useEffect(() => {
+    const unsubscribe = subscribeRealtime()
+    return unsubscribe
+  }, [])
+
   return (
     <div>
       <div className="mb-4">

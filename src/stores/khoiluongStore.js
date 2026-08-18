@@ -63,6 +63,20 @@ export const useKhoiLuongStore = create((set, get) => ({
     return { data, error }
   },
 
+  subscribeRealtime: () => {
+    try {
+      const channel = supabase.channel('khoiluong-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'kl_cong_viec' }, () => get().fetchAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'kl_kpi' }, () => get().fetchAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'kl_marketing' }, () => get().fetchAll())
+        .subscribe()
+      return () => supabase.removeChannel(channel)
+    } catch (e) {
+      console.error('KhoiLuong realtime subscription failed:', e)
+      return () => {}
+    }
+  },
+
   // Thống kê theo người thực hiện (col H)
   getPeopleStats: () => {
     const { congViec } = get()
