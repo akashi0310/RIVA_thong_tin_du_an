@@ -12,7 +12,10 @@ export default function ASMOLayout() {
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-800">⭐ ASMO 2026</h1>
+        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <img src="/logo-asmo.png" alt="ASMO" className="h-8 w-auto object-contain" />
+          ASMO 2026
+        </h1>
         <div className="flex gap-1 mt-3 overflow-x-auto pb-1 no-scrollbar">
           {tabs.map(tab => (
             <NavLink key={tab.to} to={tab.to}

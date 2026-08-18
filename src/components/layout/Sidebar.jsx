@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 const navItems = [
   { to: '/', label: 'Tổng quan', icon: '🏠', exact: true },
   {
-    to: '/asmo', label: 'ASMO', icon: '⭐', children: [
+    to: '/asmo', label: 'ASMO', icon: '⭐', imgSrc: '/logo-asmo.png', children: [
       { to: '/asmo/dashboard', label: 'Dashboard' },
       { to: '/asmo/incidents', label: 'Sự cố' },
       { to: '/asmo/tasks', label: 'Công việc' },
@@ -68,7 +68,10 @@ export default function Sidebar({ open, onClose }) {
                   }
                   onClick={onClose}
                 >
-                  <span>{item.icon}</span>
+                  {item.imgSrc
+                    ? <img src={item.imgSrc} alt={item.label} className="w-5 h-5 object-contain" />
+                    : <span>{item.icon}</span>
+                  }
                   <span>{item.label}</span>
                 </NavLink>
                 {item.children && isParentActive && (
