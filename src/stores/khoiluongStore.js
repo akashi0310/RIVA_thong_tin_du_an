@@ -5,23 +5,27 @@ export const useKhoiLuongStore = create((set, get) => ({
   congViec: [],
   kpi: [],
   marketing: [],
+  phanCong: [],
   loading: false,
   fetchError: null,
 
   fetchAll: async () => {
     set({ loading: true, fetchError: null })
-    const [cv, kpiRes, mk] = await Promise.all([
+    const [cv, kpiRes, mk, pc] = await Promise.all([
       supabase.from('kl_cong_viec').select('*').order('stt', { ascending: true }),
       supabase.from('kl_kpi').select('*').order('id', { ascending: true }),
       supabase.from('kl_marketing').select('*').order('stt', { ascending: true }),
+      supabase.from('kl_phan_cong').select('*').order('id', { ascending: true }),
     ])
     if (cv.error) console.error('kl_cong_viec:', cv.error.message)
     if (kpiRes.error) console.error('kl_kpi:', kpiRes.error.message)
     if (mk.error) console.error('kl_marketing:', mk.error.message)
+    if (pc.error) console.error('kl_phan_cong:', pc.error.message)
     set({
       congViec: cv.data || [],
       kpi: kpiRes.data || [],
       marketing: mk.data || [],
+      phanCong: pc.data || [],
       loading: false,
       fetchError: cv.error?.message || null,
     })
@@ -82,6 +86,7 @@ export const useKhoiLuongStore = create((set, get) => ({
         .on('postgres_changes', { event: '*', schema: 'public', table: 'kl_cong_viec' }, () => get().fetchAll())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'kl_kpi' }, () => get().fetchAll())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'kl_marketing' }, () => get().fetchAll())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'kl_phan_cong' }, () => get().fetchAll())
         .subscribe()
       return () => supabase.removeChannel(channel)
     } catch (e) {
