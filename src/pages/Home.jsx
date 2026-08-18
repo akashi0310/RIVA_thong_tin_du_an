@@ -122,7 +122,9 @@ export default function Home() {
         return (
           <div key={card.to} className={`bg-white rounded-2xl border-2 ${c.border} shadow-sm p-6`}>
             <div className="flex items-center gap-3 mb-4">
-              <span className={`text-3xl p-3 rounded-xl ${c.icon}`}>{card.icon}</span>
+              <div className={`p-2 rounded-xl ${c.icon} flex items-center justify-center w-16 h-16`}>
+                <img src="/logo-asmo.png" alt="ASMO" className="w-full h-full object-contain" />
+              </div>
               <div>
                 <h2 className={`text-xl font-bold ${c.title}`}>{card.label}</h2>
                 <p className="text-gray-500 text-sm">{card.desc}</p>
