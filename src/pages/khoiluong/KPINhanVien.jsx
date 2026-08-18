@@ -230,13 +230,15 @@ export default function KPINhanVien() {
                               <button onClick={cancelEdit} className="text-gray-400 text-xs hover:underline">Hủy</button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => startEdit(k)}
-                              className="text-left group"
-                              title="Click để nhập thực tế"
-                            >
-                              <div className={`text-sm font-semibold ${thucTeDisplay ? 'text-indigo-600' : 'text-gray-300'} group-hover:underline`}>
-                                {thucTeDisplay ?? 'Nhập thực tế...'}
+                            <button onClick={() => startEdit(k)} className="text-left w-full">
+                              <div className={`text-sm font-semibold mb-0.5 ${thucTeDisplay ? 'text-indigo-700' : ''}`}>
+                                {thucTeDisplay ? (
+                                  <span className="border border-indigo-200 bg-indigo-50 rounded px-2 py-0.5 inline-block">{thucTeDisplay}</span>
+                                ) : (
+                                  <span className="border border-dashed border-gray-300 rounded px-2 py-0.5 text-gray-400 font-normal text-xs inline-block hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                                    Nhập thực tế...
+                                  </span>
+                                )}
                               </div>
                               <div className="text-xs text-gray-400">Thực tế</div>
                             </button>

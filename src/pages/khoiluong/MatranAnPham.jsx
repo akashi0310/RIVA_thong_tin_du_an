@@ -127,13 +127,18 @@ export default function MatranAnPham() {
                           <button onClick={() => setEditingNote(null)} className="text-gray-400 text-xs hover:underline">Hủy</button>
                         </div>
                       ) : (
-                        <span
-                          className="text-xs text-gray-500 cursor-pointer hover:text-indigo-600 block truncate max-w-[130px]"
+                        <div
+                          className="cursor-pointer"
                           onClick={() => { setEditingNote(m.id); setNoteValue(m.ghi_chu || '') }}
-                          title={m.ghi_chu || 'Click để thêm ghi chú'}
                         >
-                          {m.ghi_chu || <span className="text-gray-300 italic">Thêm ghi chú...</span>}
-                        </span>
+                          {m.ghi_chu ? (
+                            <span className="text-xs border border-gray-200 bg-gray-50 rounded px-2 py-0.5 text-gray-700 block truncate max-w-[130px]">{m.ghi_chu}</span>
+                          ) : (
+                            <span className="text-xs border border-dashed border-gray-300 rounded px-2 py-0.5 text-gray-400 block hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                              Thêm ghi chú...
+                            </span>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>

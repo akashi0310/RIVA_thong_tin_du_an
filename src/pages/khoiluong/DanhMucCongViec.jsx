@@ -230,12 +230,21 @@ if (filterStatus === 'qua_han') { if (!isOverdue(t)) return false }
                         ) : (
                           <button
                             onClick={() => { setEditingDeadline(t.id); setDeadlineValue(t.deadline || '') }}
-                            className={`text-xs block w-full text-center hover:text-indigo-600 transition-colors ${
-                              overdue ? 'text-red-600 font-semibold' : t.deadline ? 'text-gray-600' : 'text-gray-300 italic'
-                            }`}
-                            title="Click để đặt deadline"
+                            className="block w-full text-center"
                           >
-                            {t.deadline ? new Date(t.deadline + 'T00:00:00').toLocaleDateString('vi-VN') : 'Chưa đặt'}
+                            {t.deadline ? (
+                              <span className={`text-xs px-2 py-0.5 rounded border inline-block ${
+                                overdue
+                                  ? 'border-red-300 bg-red-50 text-red-600 font-semibold'
+                                  : 'border-gray-200 bg-gray-50 text-gray-700'
+                              }`}>
+                                {new Date(t.deadline + 'T00:00:00').toLocaleDateString('vi-VN')}
+                              </span>
+                            ) : (
+                              <span className="text-xs border border-dashed border-gray-300 rounded px-2 py-0.5 text-gray-400 inline-block hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                                Chưa đặt
+                              </span>
+                            )}
                           </button>
                         )}
                       </td>
@@ -271,13 +280,18 @@ if (filterStatus === 'qua_han') { if (!isOverdue(t)) return false }
                             <button onClick={() => setEditingNote(null)} className="text-gray-400 text-xs hover:underline">Hủy</button>
                           </div>
                         ) : (
-                          <span
-                            className="text-xs text-gray-500 cursor-pointer hover:text-indigo-600 block truncate max-w-[130px]"
+                          <div
+                            className="cursor-pointer"
                             onClick={() => { setEditingNote(t.id); setNoteValue(t.ghi_chu || '') }}
-                            title={t.ghi_chu || 'Click để thêm ghi chú'}
                           >
-                            {t.ghi_chu || <span className="text-gray-300 italic">Thêm ghi chú...</span>}
-                          </span>
+                            {t.ghi_chu ? (
+                              <span className="text-xs border border-gray-200 bg-gray-50 rounded px-2 py-0.5 text-gray-700 block truncate max-w-[130px]">{t.ghi_chu}</span>
+                            ) : (
+                              <span className="text-xs border border-dashed border-gray-300 rounded px-2 py-0.5 text-gray-400 block hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+                                Thêm ghi chú...
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
                     </tr>
