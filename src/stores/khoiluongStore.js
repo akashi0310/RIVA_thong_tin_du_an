@@ -63,6 +63,19 @@ export const useKhoiLuongStore = create((set, get) => ({
     return { data, error }
   },
 
+  addCongViec: async (task) => {
+    const { congViec } = get()
+    const maxStt = congViec.reduce((m, t) => Math.max(m, t.stt || 0), 0)
+    const { data, error } = await supabase
+      .from('kl_cong_viec')
+      .insert([{ ...task, stt: maxStt + 1 }])
+      .select()
+      .single()
+    if (!error && data)
+      set(s => ({ congViec: [...s.congViec, data] }))
+    return { data, error }
+  },
+
   subscribeRealtime: () => {
     try {
       const channel = supabase.channel('khoiluong-realtime')
@@ -84,9 +97,10 @@ export const useKhoiLuongStore = create((set, get) => ({
     for (const t of congViec) {
       const names = (t.thuc_hien || '').split(/[,/]/).map(s => s.trim()).filter(Boolean)
       for (const name of names) {
-        if (!people[name]) people[name] = { name, total: 0, done: 0 }
+        if (!people[name]) people[name] = { name, total: 0, done: 0, pending: 0 }
         people[name].total++
         if (t.trang_thai === '✓') people[name].done++
+        if (t.trang_thai === '⏳') people[name].pending++
       }
     }
     return Object.values(people).sort((a, b) => b.total - a.total)

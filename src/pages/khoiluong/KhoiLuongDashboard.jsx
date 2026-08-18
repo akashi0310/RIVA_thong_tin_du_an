@@ -3,6 +3,14 @@ import { Link } from 'react-router-dom'
 import { useKhoiLuongStore } from '../../stores/khoiluongStore'
 import KPICard from '../../components/common/KPICard'
 
+function isOverdue(t) {
+  if (!t.deadline) return false
+  if (t.trang_thai === '✓' || t.trang_thai === '✗') return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return new Date(t.deadline) < today
+}
+
 export default function KhoiLuongDashboard() {
   const { congViec, loading, fetchAll, getPeopleStats } = useKhoiLuongStore()
 
@@ -10,8 +18,10 @@ export default function KhoiLuongDashboard() {
 
   const total = congViec.length
   const done = congViec.filter(t => t.trang_thai === '✓').length
-  const inProgress = congViec.filter(t => t.trang_thai === '□').length
+  const choDuyet = congViec.filter(t => t.trang_thai === '⏳').length
+  const quaHan = congViec.filter(isOverdue).length
   const notDone = congViec.filter(t => t.trang_thai === '✗').length
+  const chuaLam = congViec.filter(t => !t.trang_thai || t.trang_thai === '□').length
 
   const people = getPeopleStats()
 
@@ -20,11 +30,19 @@ export default function KhoiLuongDashboard() {
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <KPICard label="Tổng công việc" value={total} icon="📋" color="blue" />
-        <KPICard label="Hoàn thành" value={done} icon="✅" color="green" sub={total ? `${Math.round(done / total * 100)}%` : '0%'} />
-        <KPICard label="Đang thực hiện" value={inProgress} icon="⏳" color="yellow" />
+        <KPICard
+          label="Hoàn thành"
+          value={done}
+          icon="✅"
+          color="green"
+          sub={total ? `${Math.round(done / total * 100)}% (chỉ tính đã duyệt)` : '0%'}
+        />
+        <KPICard label="Chờ duyệt" value={choDuyet} icon="⏳" color="yellow" sub="Output chưa được duyệt" />
+        <KPICard label="Quá hạn" value={quaHan} icon="⚠️" color="red" sub="Deadline đã qua, chưa xong" />
         <KPICard label="Không thực hiện" value={notDone} icon="✗" color="red" />
+        <KPICard label="Chưa làm" value={chuaLam} icon="□" color="gray" />
       </div>
 
       {/* Bảng phân phối khối lượng theo nhân viên */}
@@ -40,6 +58,7 @@ export default function KhoiLuongDashboard() {
                 <th className="px-4 py-3 text-left">Nhân viên</th>
                 <th className="px-4 py-3 text-center">Tổng</th>
                 <th className="px-4 py-3 text-center">Hoàn thành</th>
+                <th className="px-4 py-3 text-center">Chờ duyệt</th>
                 <th className="px-4 py-3 text-left w-40">Tiến độ</th>
               </tr>
             </thead>
@@ -51,6 +70,7 @@ export default function KhoiLuongDashboard() {
                     <td className="px-4 py-3 font-medium text-gray-800">{p.name}</td>
                     <td className="px-4 py-3 text-center font-semibold text-gray-800">{p.total}</td>
                     <td className="px-4 py-3 text-center text-green-600 font-medium">{p.done}</td>
+                    <td className="px-4 py-3 text-center text-yellow-600 font-medium">{p.pending ?? 0}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-gray-100 rounded-full h-2">
@@ -67,7 +87,7 @@ export default function KhoiLuongDashboard() {
               })}
               {people.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-400">Chưa có dữ liệu</td>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">Chưa có dữ liệu</td>
                 </tr>
               )}
             </tbody>
