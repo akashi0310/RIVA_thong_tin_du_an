@@ -28,22 +28,40 @@ const GROUP_COLORS = [
   'border-l-teal-400',
 ]
 
+const NGUON_DU_LIEU_INFO = {
+  'CRM':        { label: 'CRM', desc: 'Hệ thống quản lý khách hàng (CRM)' },
+  'CRM/Task':   { label: 'CRM/Task', desc: 'Kết hợp dữ liệu CRM và danh sách task nội bộ' },
+  'Campaign':   { label: 'Campaign', desc: 'Dữ liệu chiến dịch Marketing' },
+  'Content':    { label: 'Content', desc: 'Hệ thống quản lý nội dung (bài đăng, bài viết...)' },
+  'Class':      { label: 'Class', desc: 'Hệ thống quản lý lớp học & đào tạo' },
+  'Attendance': { label: 'Attendance', desc: 'Dữ liệu chấm công, điểm danh học viên' },
+  'Project':    { label: 'Project', desc: 'Hệ thống quản lý dự án' },
+  'Visa':       { label: 'Visa', desc: 'Hồ sơ và tiến độ xử lý visa' },
+  'System':     { label: 'System', desc: 'Hệ thống kỹ thuật nội bộ (sprint, deploy...)' },
+  'Ticket':     { label: 'Ticket', desc: 'Hệ thống theo dõi sự cố & bug (helpdesk ticket)' },
+  'Task':       { label: 'Task', desc: 'Danh sách công việc trên hệ thống này' },
+  'Report':     { label: 'Report', desc: 'Báo cáo định kỳ nội bộ' },
+}
+
 export default function KPINhanVien() {
   const { kpi, loading, fetchAll, updateKPI } = useKhoiLuongStore()
   const [editing, setEditing] = useState(null) // { id, field }
   const [editVal, setEditVal] = useState('')
+  const [showLegend, setShowLegend] = useState(false)
 
   useEffect(() => { fetchAll() }, [])
 
-  const startEdit = (k, field) => {
-    setEditing({ id: k.id, field })
-    setEditVal(String(k[field] ?? ''))
+  const startEdit = (k) => {
+    setEditing({ id: k.id })
+    setEditVal(k.thuc_te_text ?? (k.thuc_te != null ? String(k.thuc_te) : ''))
   }
 
   const saveEdit = async (k) => {
-    const val = parseFloat(editVal)
-    if (isNaN(val)) { toast.error('Giá trị không hợp lệ'); return }
-    const { error } = await updateKPI(k.id, { [editing.field]: val })
+    const num = parseFloat(editVal)
+    const updates = isNaN(num)
+      ? { thuc_te: null, thuc_te_text: editVal.trim() }
+      : { thuc_te: num, thuc_te_text: String(num) }
+    const { error } = await updateKPI(k.id, updates)
     if (error) toast.error('Không thể cập nhật KPI')
     else { toast.success('Đã cập nhật'); setEditing(null) }
   }
@@ -68,12 +86,14 @@ export default function KPINhanVien() {
     if (!byGroup[g][sub]) byGroup[g][sub] = []
     byGroup[g][sub].push(k)
   }
-
   const groups = Object.keys(byGroup)
 
   // Tổng quan
   const numericKpis = kpi.filter(k => k.muc_tieu != null && k.muc_tieu > 0)
   const achieved = numericKpis.filter(k => (k.thuc_te || 0) >= k.muc_tieu).length
+
+  // Các nguồn dữ liệu thực tế có trong data
+  const usedSources = [...new Set(kpi.map(k => k.nguon_du_lieu).filter(Boolean))]
 
   return (
     <div className="space-y-4">
@@ -92,6 +112,37 @@ export default function KPINhanVien() {
           <p className="text-xs text-gray-500 uppercase font-medium">Nhóm nhân sự</p>
           <p className="text-3xl font-bold text-indigo-600 mt-1">{groups.length}</p>
         </div>
+      </div>
+
+      {/* Legend nguồn dữ liệu */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <button
+          className="w-full px-5 py-3 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+          onClick={() => setShowLegend(v => !v)}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">📖 Nguồn dữ liệu là gì?</span>
+            <div className="flex gap-1.5 flex-wrap">
+              {usedSources.map(s => (
+                <span key={s} className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-mono">{s}</span>
+              ))}
+            </div>
+          </div>
+          <span className="text-gray-400 text-sm">{showLegend ? '▲' : '▼'}</span>
+        </button>
+        {showLegend && (
+          <div className="border-t border-gray-100 px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {usedSources.map(s => {
+              const info = NGUON_DU_LIEU_INFO[s]
+              return (
+                <div key={s} className="flex items-start gap-2">
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono shrink-0 mt-0.5">{s}</span>
+                  <span className="text-xs text-gray-500">{info?.desc ?? s}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* KPI theo nhóm */}
@@ -122,80 +173,88 @@ export default function KPINhanVien() {
             {/* Sub-groups */}
             {Object.entries(subGroups).map(([subGroup, items]) => (
               <div key={subGroup}>
-                {/* Sub-group header */}
-                <div className="px-5 py-1.5 bg-gray-50 border-b border-gray-100">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{subGroup}</span>
+                {/* Sub-group header với column labels */}
+                <div className="px-5 py-1.5 bg-gray-50 border-b border-gray-100 flex items-center">
+                  <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide w-48">{subGroup}</span>
+                  <span className="text-xs text-gray-400 w-24 ml-2">Nguồn DL</span>
+                  <span className="text-xs text-gray-400 w-36">Mục tiêu</span>
+                  <span className="text-xs text-gray-400 w-40">Thực tế</span>
+                  <span className="text-xs text-gray-400 flex-1">Tiến độ</span>
                 </div>
 
                 {/* KPI rows */}
-                <table className="w-full text-sm">
-                  <tbody className="divide-y divide-gray-50">
-                    {items.map(k => (
-                      <tr key={k.id} className="hover:bg-gray-50/50">
+                <div className="divide-y divide-gray-50">
+                  {items.map(k => {
+                    const isEditing = editing?.id === k.id
+                    const thucTeDisplay = k.thuc_te_text ?? (k.thuc_te != null ? String(k.thuc_te) : null)
+
+                    return (
+                      <div key={k.id} className="px-5 py-3 flex items-center hover:bg-gray-50/50 transition-colors">
                         {/* Tên chỉ số */}
-                        <td className="px-5 py-3 font-medium text-gray-800 w-56">{k.ten_kpi}</td>
+                        <div className="w-48 font-medium text-gray-800 text-sm">{k.ten_kpi}</div>
 
                         {/* Nguồn dữ liệu */}
-                        <td className="px-3 py-3 w-28">
+                        <div className="w-24 ml-2">
                           {k.nguon_du_lieu && (
-                            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{k.nguon_du_lieu}</span>
+                            <span
+                              className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-mono cursor-help"
+                              title={NGUON_DU_LIEU_INFO[k.nguon_du_lieu]?.desc ?? k.nguon_du_lieu}
+                            >
+                              {k.nguon_du_lieu}
+                            </span>
                           )}
-                        </td>
+                        </div>
 
                         {/* Mục tiêu */}
-                        <td className="px-3 py-3 w-36">
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-400">MT:</span>
-                            <span className="text-sm font-semibold text-gray-700">
-                              {k.muc_tieu_text || (k.muc_tieu != null ? k.muc_tieu : '—')}
-                            </span>
+                        <div className="w-36">
+                          <div className="text-sm font-semibold text-gray-700">
+                            {k.muc_tieu_text || (k.muc_tieu != null ? k.muc_tieu : '—')}
                           </div>
-                        </td>
+                          <div className="text-xs text-gray-400">Mục tiêu</div>
+                        </div>
 
                         {/* Thực tế — editable */}
-                        <td className="px-3 py-3 w-36">
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-400">TT:</span>
-                            {editing?.id === k.id && editing?.field === 'thuc_te' ? (
-                              <div className="flex items-center gap-1">
-                                <input
-                                  type="number"
-                                  className="border border-indigo-300 rounded px-2 py-0.5 text-xs w-20 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                                  value={editVal}
-                                  onChange={e => setEditVal(e.target.value)}
-                                  onKeyDown={e => { if (e.key === 'Enter') saveEdit(k); if (e.key === 'Escape') cancelEdit() }}
-                                  autoFocus
-                                />
-                                <button onClick={() => saveEdit(k)} className="text-indigo-600 text-xs">✓</button>
-                                <button onClick={cancelEdit} className="text-gray-400 text-xs">✗</button>
+                        <div className="w-40">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="text"
+                                className="border border-indigo-300 rounded px-2 py-1 text-sm w-24 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                placeholder="Số hoặc chữ..."
+                                value={editVal}
+                                onChange={e => setEditVal(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') saveEdit(k); if (e.key === 'Escape') cancelEdit() }}
+                                autoFocus
+                              />
+                              <button onClick={() => saveEdit(k)} className="text-indigo-600 text-xs hover:underline">Lưu</button>
+                              <button onClick={cancelEdit} className="text-gray-400 text-xs hover:underline">Hủy</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => startEdit(k)}
+                              className="text-left group"
+                              title="Click để nhập thực tế"
+                            >
+                              <div className={`text-sm font-semibold ${thucTeDisplay ? 'text-indigo-600' : 'text-gray-300'} group-hover:underline`}>
+                                {thucTeDisplay ?? 'Nhập thực tế...'}
                               </div>
-                            ) : (
-                              <button
-                                className={`text-sm font-semibold hover:underline cursor-pointer ${k.thuc_te != null ? 'text-indigo-600' : 'text-gray-300 italic text-xs font-normal'}`}
-                                onClick={() => startEdit(k, 'thuc_te')}
-                                title="Click để nhập thực tế"
-                              >
-                                {k.thuc_te ?? 'Nhập...'}
-                              </button>
-                            )}
-                          </div>
-                        </td>
+                              <div className="text-xs text-gray-400">Thực tế</div>
+                            </button>
+                          )}
+                        </div>
 
-                        {/* Progress bar — chỉ hiện khi có mục tiêu số */}
-                        <td className="px-3 py-3">
+                        {/* Tiến độ */}
+                        <div className="flex-1">
                           {k.muc_tieu != null && k.muc_tieu > 0 ? (
                             <ProgressBar value={k.thuc_te || 0} max={k.muc_tieu} />
                           ) : (
                             <span className="text-xs text-gray-300 italic">Chỉ tiêu định tính</span>
                           )}
-                        </td>
-
-                        {/* Ghi chú */}
-                        <td className="px-3 py-3 text-xs text-gray-400 w-36">{k.ghi_chu}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             ))}
           </div>
