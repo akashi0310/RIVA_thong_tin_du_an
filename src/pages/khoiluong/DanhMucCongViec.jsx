@@ -60,10 +60,6 @@ export default function DanhMucCongViec() {
   const allNhom = [...new Set(congViec.map(t => t.nhom_cap_1).filter(Boolean))]
   const allDuAn = [...new Set(congViec.map(t => t.du_an).filter(Boolean))].sort()
 
-  useEffect(() => {
-    if (allNhom.length && activeTab === null) setActiveTab(allNhom[0])
-  }, [congViec])
-
   const filtered = congViec.filter(t => {
     if (search) {
       const q = search.toLowerCase()
@@ -76,7 +72,7 @@ export default function DanhMucCongViec() {
     return true
   })
 
-  const tabItems = activeTab ? filtered.filter(t => t.nhom_cap_1 === activeTab) : []
+  const tabItems = activeTab ? filtered.filter(t => t.nhom_cap_1 === activeTab) : filtered
 
   const toggleStatus = async (task) => {
     const cur = STATUS_CYCLE.indexOf(task.trang_thai)
@@ -115,43 +111,29 @@ export default function DanhMucCongViec() {
   if (loading) return <div className="text-gray-400 py-8 text-center">Đang tải dữ liệu...</div>
 
   return (
-    <div className="space-y-0">
-      {/* Tab bar ngang */}
-      <div className="flex flex-wrap gap-1 border-b border-gray-200 pb-0">
-        {allNhom.map(nhom => {
-          const allItems = congViec.filter(t => t.nhom_cap_1 === nhom)
-          const done = allItems.filter(t => t.trang_thai === '✓').length
-          const pct = allItems.length ? Math.round((done / allItems.length) * 100) : 0
-          const hasOverdue = allItems.some(isOverdue)
-          const isActive = activeTab === nhom
-          return (
-            <button
-              key={nhom}
-              onClick={() => setActiveTab(nhom)}
-              className={`relative px-4 py-2.5 text-sm font-medium rounded-t-lg border border-b-0 transition-colors whitespace-nowrap
-                ${isActive
-                  ? 'bg-white border-gray-200 text-indigo-700 -mb-px z-10'
-                  : 'bg-gray-50 border-transparent text-gray-500 hover:text-indigo-600 hover:bg-gray-100'
-                }`}
-            >
-              <span>{nhom}</span>
-              {hasOverdue && (
-                <span className="ml-1 inline-block w-2 h-2 rounded-full bg-red-500 align-middle" title="Có việc quá hạn" />
-              )}
-              <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full font-semibold
-                ${pct >= 80 ? 'bg-green-100 text-green-700' : pct >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-indigo-50 text-indigo-500'}`}>
-                {pct}%
-              </span>
-              {isActive && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />}
-            </button>
-          )
-        })}
-      </div>
-
+    <div className="space-y-3">
       {/* Panel nội dung */}
-      <div className="bg-white rounded-b-xl rounded-tr-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {/* Toolbar */}
         <div className="flex flex-wrap gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+          <select
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 font-medium text-gray-700"
+            value={activeTab || ''}
+            onChange={e => setActiveTab(e.target.value || null)}
+          >
+            <option value="">Tất cả nhóm</option>
+            {allNhom.map(nhom => {
+              const items = congViec.filter(t => t.nhom_cap_1 === nhom)
+              const done = items.filter(t => t.trang_thai === '✓').length
+              const pct = items.length ? Math.round((done / items.length) * 100) : 0
+              const hasOverdue = items.some(isOverdue)
+              return (
+                <option key={nhom} value={nhom}>
+                  {hasOverdue ? '⚠️ ' : ''}{nhom} — {pct}%
+                </option>
+              )
+            })}
+          </select>
           <input
             className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-indigo-300"
             placeholder="Tìm kiếm đầu việc..."
